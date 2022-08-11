@@ -26,25 +26,22 @@ Future<void> main(List<String> args) async {
       abbr: 'p',
       help: 'The port to connect or bind to.',
       defaultsTo: '9900',
-    )
-    ..addOption(
-      'host',
-      abbr: 'h',
-      help: 'The host to connect to.',
-      defaultsTo: 'localhost',
-    )
-    ..addOption(
-      'input-dir',
-      abbr: 'i',
-      help: 'Directory that houses the input files for the server.',
-      defaultsTo: './input',
-    )
-    ..addOption(
-      'output-dir',
-      abbr: 'o',
-      help: 'Directory that houses the output files for the server.',
-      defaultsTo: './output',
-    )
+    )..addOption(
+    'host',
+    abbr: 'H',
+    help: 'The host to connect to.',
+    defaultsTo: 'localhost',
+  )..addOption(
+    'input-dir',
+    abbr: 'i',
+    help: 'Directory that houses the input files for the server.',
+    defaultsTo: './input',
+  )..addOption(
+    'output-dir',
+    abbr: 'o',
+    help: 'Directory that houses the output files for the server.',
+    defaultsTo: './output',
+  )
     ..addFlag(
       'forever',
       abbr: 'f',
@@ -66,18 +63,37 @@ Future<void> main(List<String> args) async {
 
   final options = parser.parse(args);
   try {
-    final port = options['port'] as int;
+    final portStr = options['port'] as String;
     final host = options['host'] as String;
-    final inputDir = options['input-dir'] as String;
-    final outputDir = options['output-dir'] as String;
+    final inputDirStr = options['input-dir'] as String;
+    final outputDirStr = options['output-dir'] as String;
     final forever = options['forever'] as bool;
     final mode = options['mode'] as String;
 
+    final port = int.tryParse(portStr);
+    if (port == null || port.isNegative) {
+      error('main: port must be a non-negative integer');
+      exit(1);
+    }
+
     if (mode == 'server') {
+      final inputDir = Directory(inputDirStr);
+      final outputDir = Directory(outputDirStr);
+
+      if (!inputDir.existsSync()) {
+        debug('main: input directory does not exist; creating one');
+        inputDir.createSync();
+      }
+
+      if (!outputDir.existsSync()) {
+        debug('main: output directory does not exist; creating one');
+        outputDir.createSync();
+      }
+
       final server = Server(
         port: port,
-        inputQ: InputQ(Directory(inputDir)),
-        outputDir: Directory(outputDir),
+        inputQ: InputQ(inputDir),
+        outputDir: outputDir,
       );
 
       info('Starting in server mode');
@@ -89,10 +105,10 @@ Future<void> main(List<String> args) async {
       );
 
       if (forever) {
-        info('Starting in client mode (persistent)');
+        info('main: starting in client mode (persistent)');
         await client.connectPersistent();
       } else {
-        info('Starting in client mode (oneshot)');
+        info('main: starting in client mode (oneshot)');
         await client.connect();
       }
     }
