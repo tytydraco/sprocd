@@ -16,9 +16,6 @@ class InputQ {
   /// The list of input files.
   late final _inputs = SplayTreeSet<File>(_inputsCompare);
 
-  /// The set of working files that are already being handled.
-  final _working = <File>{};
-
   /// Perform a scan whenever the list of files change.
   void _watchForChanges() {
     inputDir.watch().listen((_) {
@@ -43,27 +40,27 @@ class InputQ {
   /// The number of input files.
   int get numberOfInputs => _inputs.length;
 
-  /// The number of working files.
-  int get numberOfWorking => _working.length;
-
   /// Scan for new files in the [inputDir] and update the input list.
   /// Do not add any files that are already marked as working files.
   void scan() {
     _inputs.clear();
     for (final entity in inputDir.listSync()) {
-      if (entity is File &&
-          _working.where((file) => file.path == entity.path).isEmpty) {
+      if (entity is File && !entity.path.endsWith('.working')) {
         _inputs.add(entity);
       }
     }
   }
 
   /// Returns the next input to be used in the set. Remove it from being
-  /// accessible in the set.
+  /// accessible in the set. Rename it to indicate that it is now a working
+  /// file.
   File pop() {
     final file = _inputs.first;
     _inputs.remove(file);
-    _working.add(file);
-    return file;
+
+    final newName = '${basename(file.path)}.working';
+    final newPath = join(file.parent.path, newName);
+    file.renameSync(newPath);
+    return File(newPath);
   }
 }
