@@ -6,7 +6,9 @@ import 'package:path/path.dart';
 /// A queue of input files that can be scanned for and popped.
 class InputQ {
   /// Creates a new [InputQ] given an [inputDir].
-  InputQ(this.inputDir);
+  InputQ(this.inputDir) {
+    _watchForChanges();
+  }
 
   /// The directory housing the input files.
   final Directory inputDir;
@@ -16,6 +18,13 @@ class InputQ {
 
   /// The set of working files that are already being handled.
   final _working = <File>{};
+
+  /// Perform a scan whenever the list of files change.
+  void _watchForChanges() {
+    inputDir.watch().listen((_) {
+      if (inputDir.existsSync()) scan();
+    });
+  }
 
   /// Sort the input set based on file access time. Otherwise, compare based on
   /// file name.
@@ -37,15 +46,10 @@ class InputQ {
   /// The number of working files.
   int get numberOfWorking => _working.length;
 
-  /// Clear all current lists of input and working files.
-  void clear() {
-    _inputs.clear();
-    _working.clear();
-  }
-
   /// Scan for new files in the [inputDir] and update the input list.
   /// Do not add any files that are already marked as working files.
   void scan() {
+    _inputs.clear();
     for (final entity in inputDir.listSync()) {
       if (entity is File &&
           _working.where((file) => file.path == entity.path).isEmpty) {

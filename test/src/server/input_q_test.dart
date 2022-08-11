@@ -7,12 +7,30 @@ import 'package:test/test.dart';
 void main() {
   final tempDir = Directory.systemTemp.createTempSync();
 
+  setUp(tempDir.createSync);
+  tearDown(
+    () => tempDir.listSync().forEach((element) {
+      element.deleteSync(recursive: true);
+    }),
+  );
+
   group('InputQ', () {
     final inputQ = InputQ(tempDir);
 
-    setUp(tempDir.createSync);
-    setUp(inputQ.clear);
-    tearDown(() => tempDir.deleteSync(recursive: true));
+    test('Automatic scan', () async {
+      final test1 = File(join(tempDir.path, 'test1'))..createSync();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final test2 = File(join(tempDir.path, 'test2'))..createSync();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      test1.deleteSync();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      inputQ.scan();
+
+      expect(inputQ.numberOfInputs, 1);
+      expect(inputQ.pop().path, test2.path);
+      expect(inputQ.numberOfInputs, 0);
+    });
 
     test('Insert some demo files with difference in modify times', () async {
       final first = File(join(tempDir.path, 'first'))..createSync();
@@ -24,14 +42,12 @@ void main() {
       inputQ.scan();
 
       expect(inputQ.numberOfInputs, 3);
-      expect(inputQ.numberOfWorking, 0);
 
       expect(inputQ.pop().path, first.path);
       expect(inputQ.pop().path, second.path);
       expect(inputQ.pop().path, third.path);
 
       expect(inputQ.numberOfInputs, 0);
-      expect(inputQ.numberOfWorking, 3);
     });
 
     test('Insert some demo files with same modify times', () async {
@@ -42,14 +58,12 @@ void main() {
       inputQ.scan();
 
       expect(inputQ.numberOfInputs, 3);
-      expect(inputQ.numberOfWorking, 0);
 
       expect(inputQ.pop().path, a.path);
       expect(inputQ.pop().path, b.path);
       expect(inputQ.pop().path, c.path);
 
       expect(inputQ.numberOfInputs, 0);
-      expect(inputQ.numberOfWorking, 3);
     });
   });
 }
