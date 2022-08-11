@@ -12,6 +12,7 @@ class Client {
   Client({
     required this.host,
     required this.port,
+    required this.command,
   });
 
   /// The host to connect to.
@@ -19,6 +20,10 @@ class Client {
 
   /// The port to connect to.
   final int port;
+
+  /// The command to execute to process the input file. The input file path will
+  /// be appended to the command.
+  final String command;
 
   /// The file to write input data to.
   static final inputFilePath = join(Directory.systemTemp.path, 'input');

@@ -45,6 +45,14 @@ Future<void> main(List<String> args) async {
       help: 'Directory that houses the output files for the server.',
       defaultsTo: './output',
     )
+    ..addOption(
+      'command',
+      abbr: 'c',
+      help: 'Command that the client will run when data is received from the '
+          'server. The path to the input content will be appended to the end '
+          'of the command.',
+      defaultsTo: 'echo',
+    )
     ..addFlag(
       'forever',
       abbr: 'f',
@@ -70,6 +78,7 @@ Future<void> main(List<String> args) async {
     final host = options['host'] as String;
     final inputDirStr = options['input-dir'] as String;
     final outputDirStr = options['output-dir'] as String;
+    final command = options['command'] as String;
     final forever = options['forever'] as bool;
     final mode = options['mode'] as String;
 
@@ -105,6 +114,7 @@ Future<void> main(List<String> args) async {
       final client = Client(
         host: host,
         port: port,
+        command: command,
       );
 
       if (forever) {
