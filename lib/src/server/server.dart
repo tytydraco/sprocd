@@ -23,8 +23,6 @@ class Server {
   /// The directory housing the output files.
   final Directory outputDir;
 
-  late final ServerSocket _serverSocket;
-
   /// The set of clients after a handshake that we are awaiting data from.
   /// The format is the client's remote IPV4 -> their working file path.
   final _clients = <String, String>{};
@@ -32,17 +30,17 @@ class Server {
   /// Setup the server socket.
   Future<void> start() async {
     debug('server: starting server');
-    _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
-    _startListener();
+    final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
+    _startListener(serverSocket);
   }
 
   bool _isRegistered(Socket client) =>
       _clients.containsKey(client.remoteAddress.address);
 
   /// Start listening for connections from clients.
-  void _startListener() {
+  void _startListener(ServerSocket serverSocket) {
     debug('server: starting listener');
-    _serverSocket.listen((client) {
+    serverSocket.listen((client) {
       debug('server: client connected: ${client.remoteAddress.address}');
 
       // If the client is not yet registered, perform a handshake and send some
@@ -55,7 +53,7 @@ class Server {
         if (file == null) {
           debug(
             'server: nothing to serve, closing: '
-            '${client.remoteAddress.address}',
+                '${client.remoteAddress.address}',
           );
 
           client.close();
@@ -66,7 +64,7 @@ class Server {
 
         debug(
           'server: sending ${file.path} to client: '
-          '${client.remoteAddress.address}',
+              '${client.remoteAddress.address}',
         );
         client.addStream(file.openRead());
       }
@@ -76,7 +74,7 @@ class Server {
         if (_isRegistered(client)) {
           debug(
             'server: received from registered client: '
-            '${client.remoteAddress.address}',
+                '${client.remoteAddress.address}',
           );
 
           final inputPath = _clients[client.remoteAddress.address]!;
