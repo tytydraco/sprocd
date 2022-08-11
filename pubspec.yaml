@@ -10,3 +10,5 @@ environment:
 dev_dependencies:
   test: ^1.16.0
   very_good_analysis: any
+dependencies:
+  path: ^1.8.2
