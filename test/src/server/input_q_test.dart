@@ -28,7 +28,7 @@ void main() {
       inputQ.scan();
 
       expect(inputQ.numberOfInputs, 1);
-      expect(inputQ.pop().path, '${test2.path}.working');
+      expect(inputQ.pop()!.path, '${test2.path}.working');
       expect(inputQ.numberOfInputs, 0);
     });
 
@@ -43,9 +43,9 @@ void main() {
 
       expect(inputQ.numberOfInputs, 3);
 
-      expect(inputQ.pop().path, '${first.path}.working');
-      expect(inputQ.pop().path, '${second.path}.working');
-      expect(inputQ.pop().path, '${third.path}.working');
+      expect(inputQ.pop()!.path, '${first.path}.working');
+      expect(inputQ.pop()!.path, '${second.path}.working');
+      expect(inputQ.pop()!.path, '${third.path}.working');
 
       expect(inputQ.numberOfInputs, 0);
     });
@@ -59,9 +59,9 @@ void main() {
 
       expect(inputQ.numberOfInputs, 3);
 
-      expect(inputQ.pop().path, '${a.path}.working');
-      expect(inputQ.pop().path, '${b.path}.working');
-      expect(inputQ.pop().path, '${c.path}.working');
+      expect(inputQ.pop()!.path, '${a.path}.working');
+      expect(inputQ.pop()!.path, '${b.path}.working');
+      expect(inputQ.pop()!.path, '${c.path}.working');
 
       expect(inputQ.numberOfInputs, 0);
     });

@@ -8,8 +8,8 @@ import 'package:test/test.dart';
 
 void main() {
   final tempDir = Directory.systemTemp.createTempSync();
+  final demoFile = File(join(tempDir.path, 'demo'));
 
-  setUpAll(tempDir.createSync);
   tearDownAll(() => tempDir.deleteSync(recursive: true));
 
   group('Client and server file transfer', () {
@@ -17,29 +17,22 @@ void main() {
     final server = Server(port: 1234, inputQ: inputQ);
     final client = Client(host: 'localhost', port: 1234);
 
-    test('Initialize', () async {
-      await server.start();
-      await client.connect();
+    test('Start the server', () async {
+      await expectLater(server.start(), completes);
     });
 
-    test('Send demo file', () async {
-      final demoFile = File(join(tempDir.path, 'demo'))
+    test('Create demo file in input queue', () {
+      demoFile
         ..createSync()
         ..writeAsStringSync('hello world 12345');
 
-      await client.sendFile(demoFile);
+      inputQ.scan();
 
-      demoFile.deleteSync();
+      expect(inputQ.numberOfInputs, 1);
     });
 
-    test('Send large demo file', () async {
-      final demoFile = File(join(tempDir.path, 'demo'))..createSync();
-      List.generate(
-        100000,
-        (_) => demoFile.writeAsStringSync('Hello world', mode: FileMode.append),
-      );
-
-      await client.sendFile(demoFile);
+    test('Connect the client', () async {
+      await expectLater(client.connect(), completes);
     });
   });
 }

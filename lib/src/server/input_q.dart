@@ -26,8 +26,12 @@ class InputQ {
   /// Sort the input set based on file access time. Otherwise, compare based on
   /// file name.
   int _inputsCompare(File a, File b) {
-    final aChanged = a.statSync().changed;
-    final bChanged = b.statSync().changed;
+    final aChanged = a
+        .statSync()
+        .changed;
+    final bChanged = b
+        .statSync()
+        .changed;
 
     if (aChanged != bChanged) return aChanged.compareTo(bChanged);
 
@@ -54,7 +58,9 @@ class InputQ {
   /// Returns the next input to be used in the set. Remove it from being
   /// accessible in the set. Rename it to indicate that it is now a working
   /// file.
-  File pop() {
+  File? pop() {
+    if (_inputs.isEmpty) return null;
+
     final file = _inputs.first;
     _inputs.remove(file);
 
