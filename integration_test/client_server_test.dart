@@ -8,31 +8,38 @@ import 'package:test/test.dart';
 
 void main() {
   final tempDir = Directory.systemTemp.createTempSync();
-  final demoFile = File(join(tempDir.path, 'demo'));
 
   tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-  group('Client and server file transfer', () {
+  test('Client and server file transfer', () async {
+    final outputDir = Directory(join(tempDir.path, 'output'))..createSync();
+    final demoFile = File(join(tempDir.path, 'demo'));
+
     final inputQ = InputQ(tempDir);
-    final server = Server(port: 1234, inputQ: inputQ);
+    final server = Server(
+      port: 1234,
+      inputQ: inputQ,
+      outputDir: outputDir,
+    );
     final client = Client(host: 'localhost', port: 1234);
 
-    test('Start the server', () async {
-      await expectLater(server.start(), completes);
-    });
+    await expectLater(server.start(), completes);
 
-    test('Create demo file in input queue', () {
-      demoFile
-        ..createSync()
-        ..writeAsStringSync('hello world 12345');
+    demoFile
+      ..createSync()
+      ..writeAsStringSync('hello world 12345');
 
-      inputQ.scan();
+    inputQ.scan();
 
-      expect(inputQ.numberOfInputs, 1);
-    });
+    expect(inputQ.numberOfInputs, 1);
+    expect(demoFile.existsSync(), true);
 
-    test('Connect the client', () async {
-      await expectLater(client.connect(), completes);
-    });
+    await expectLater(client.connect(), completes);
+    await Future<void>.delayed(const Duration(seconds: 1));
+
+    expect(File(Client.inputFilePath).existsSync(), true);
+
+    expect(demoFile.existsSync(), false);
+    expect(File(join(outputDir.path, 'demo.out')).existsSync(), true);
   });
 }

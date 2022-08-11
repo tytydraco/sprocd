@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:path/path.dart';
 import 'package:sprocd/src/server/input_q.dart';
+import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
 /// clients and handling the output.
@@ -9,6 +11,7 @@ class Server {
   Server({
     required this.port,
     required this.inputQ,
+    required this.outputDir,
   });
 
   /// The port to bind to.
@@ -16,6 +19,9 @@ class Server {
 
   /// The input queue to use.
   final InputQ inputQ;
+
+  /// The directory housing the output files.
+  final Directory outputDir;
 
   late final ServerSocket _serverSocket;
 
@@ -25,6 +31,7 @@ class Server {
 
   /// Setup the server socket.
   Future<void> start() async {
+    debug('server: starting server');
     _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
     _startListener();
   }
@@ -34,24 +41,52 @@ class Server {
 
   /// Start listening for connections from clients.
   void _startListener() {
+    debug('server: starting listener');
     _serverSocket.listen((client) {
+      debug('server: client connected: ${client.remoteAddress.address}');
+
       // If the client is not yet registered, perform a handshake and send some
       // input data.
       if (!_isRegistered(client)) {
+        debug('server: registering client: ${client.remoteAddress.address}');
         final file = inputQ.pop();
+
+        // If there is nothing to do, disconnect them.
         if (file == null) {
+          debug(
+            'server: nothing to serve, closing: '
+            '${client.remoteAddress.address}',
+          );
+
           client.close();
           return;
         }
 
         _clients[client.remoteAddress.address] = file.path;
+
+        debug(
+          'server: sending ${file.path} to client: '
+          '${client.remoteAddress.address}',
+        );
         client.addStream(file.openRead());
       }
 
       client.listen((data) {
         // If already registered, write this data to the output.
         if (_isRegistered(client)) {
-          print('OUTPUT: $data');
+          debug(
+            'server: received from registered client: '
+            '${client.remoteAddress.address}',
+          );
+
+          final inputPath = _clients[client.remoteAddress.address]!;
+          final outName = basename(inputPath).replaceFirst('.working', '.out');
+          final outPath = join(outputDir.path, outName);
+
+          debug('server: writing out to $outPath');
+          File(outPath).writeAsBytesSync(data);
+          debug('server: deleting original at $inputPath');
+          File(inputPath).deleteSync();
         }
       });
     });

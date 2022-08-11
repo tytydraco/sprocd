@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:path/path.dart';
+import 'package:stdlog/stdlog.dart';
 
 /// A queue of input files that can be scanned for and popped.
 class InputQ {
@@ -19,6 +20,7 @@ class InputQ {
   /// Perform a scan whenever the list of files change.
   void _watchForChanges() {
     inputDir.watch().listen((_) {
+      debug('input_q: changes detected');
       if (inputDir.existsSync()) scan();
     });
   }
@@ -47,9 +49,11 @@ class InputQ {
   /// Scan for new files in the [inputDir] and update the input list.
   /// Do not add any files that are already marked as working files.
   void scan() {
+    debug('input_q: scanning');
     _inputs.clear();
     for (final entity in inputDir.listSync()) {
       if (entity is File && !entity.path.endsWith('.working')) {
+        debug('input_q: found ${entity.path}');
         _inputs.add(entity);
       }
     }
@@ -59,14 +63,20 @@ class InputQ {
   /// accessible in the set. Rename it to indicate that it is now a working
   /// file.
   File? pop() {
+    debug('input_q: pop requested');
     if (_inputs.isEmpty) return null;
 
     final file = _inputs.first;
     _inputs.remove(file);
 
+    debug('input_q: popped ${file.path}');
+
     final newName = '${basename(file.path)}.working';
     final newPath = join(file.parent.path, newName);
     file.renameSync(newPath);
+
+    debug('input_q: moved original to $newPath');
+
     return File(newPath);
   }
 }
