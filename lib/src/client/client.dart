@@ -40,6 +40,7 @@ class Client {
 
   /// Connect the socket to the server.
   Future<void> connect() async {
+    // TODO(tytydraco): on disconnect, wait X seconds and reconnect
     debug('client: connecting to server');
     _socket = await Socket.connect(host, port);
     _startListener();
