@@ -26,22 +26,25 @@ Future<void> main(List<String> args) async {
       abbr: 'p',
       help: 'The port to connect or bind to.',
       defaultsTo: '9900',
-    )..addOption(
-    'host',
-    abbr: 'H',
-    help: 'The host to connect to.',
-    defaultsTo: 'localhost',
-  )..addOption(
-    'input-dir',
-    abbr: 'i',
-    help: 'Directory that houses the input files for the server.',
-    defaultsTo: './input',
-  )..addOption(
-    'output-dir',
-    abbr: 'o',
-    help: 'Directory that houses the output files for the server.',
-    defaultsTo: './output',
-  )
+    )
+    ..addOption(
+      'host',
+      abbr: 'H',
+      help: 'The host to connect to.',
+      defaultsTo: 'localhost',
+    )
+    ..addOption(
+      'input-dir',
+      abbr: 'i',
+      help: 'Directory that houses the input files for the server.',
+      defaultsTo: './input',
+    )
+    ..addOption(
+      'output-dir',
+      abbr: 'o',
+      help: 'Directory that houses the output files for the server.',
+      defaultsTo: './output',
+    )
     ..addFlag(
       'forever',
       abbr: 'f',

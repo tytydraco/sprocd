@@ -46,6 +46,7 @@ class InputQ {
   /// Do not add any files that are already marked as working files.
   void scan() {
     debug('input_q: scanning');
+
     _inputs.clear();
     for (final entity in inputDir.listSync()) {
       if (entity is File && !entity.path.endsWith('.working')) {
@@ -53,6 +54,8 @@ class InputQ {
         _inputs.add(entity);
       }
     }
+
+    debug('input_q: discovered ${_inputs.length} inputs');
   }
 
   /// Returns the next input to be used in the set. Remove it from being
