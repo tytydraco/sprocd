@@ -7,11 +7,12 @@ import 'package:test/test.dart';
 void main() {
   final tempDir = Directory.systemTemp.createTempSync();
 
-  setUp(tempDir.createSync);
-  tearDown(() => tempDir.deleteSync(recursive: true));
-
   group('InputQ', () {
     final inputQ = InputQ(tempDir);
+
+    setUp(tempDir.createSync);
+    setUp(inputQ.clear);
+    tearDown(() => tempDir.deleteSync(recursive: true));
 
     test('Insert some demo files with difference in modify times', () async {
       final first = File(join(tempDir.path, 'first'))..createSync();
@@ -22,11 +23,15 @@ void main() {
 
       inputQ.scan();
 
-      expect(inputQ.size, 3);
+      expect(inputQ.numberOfInputs, 3);
+      expect(inputQ.numberOfWorking, 0);
 
       expect(inputQ.pop().path, first.path);
       expect(inputQ.pop().path, second.path);
       expect(inputQ.pop().path, third.path);
+
+      expect(inputQ.numberOfInputs, 0);
+      expect(inputQ.numberOfWorking, 3);
     });
 
     test('Insert some demo files with same modify times', () async {
@@ -36,11 +41,15 @@ void main() {
 
       inputQ.scan();
 
-      expect(inputQ.size, 3);
+      expect(inputQ.numberOfInputs, 3);
+      expect(inputQ.numberOfWorking, 0);
 
       expect(inputQ.pop().path, a.path);
       expect(inputQ.pop().path, b.path);
       expect(inputQ.pop().path, c.path);
+
+      expect(inputQ.numberOfInputs, 0);
+      expect(inputQ.numberOfWorking, 3);
     });
   });
 }

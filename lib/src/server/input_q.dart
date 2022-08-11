@@ -14,6 +14,9 @@ class InputQ {
   /// The list of input files.
   late final _inputs = SplayTreeSet<File>(_inputsCompare);
 
+  /// The set of working files that are already being handled.
+  final _working = <File>{};
+
   /// Sort the input set based on file access time. Otherwise, compare based on
   /// file name.
   int _inputsCompare(File a, File b) {
@@ -28,21 +31,35 @@ class InputQ {
     return aName.compareTo(bName);
   }
 
-  /// The number of the input files.
-  int get size => _inputs.length;
+  /// The number of input files.
+  int get numberOfInputs => _inputs.length;
+
+  /// The number of working files.
+  int get numberOfWorking => _working.length;
+
+  /// Clear all current lists of input and working files.
+  void clear() {
+    _inputs.clear();
+    _working.clear();
+  }
 
   /// Scan for new files in the [inputDir] and update the input list.
+  /// Do not add any files that are already marked as working files.
   void scan() {
-    _inputs.clear();
     for (final entity in inputDir.listSync()) {
-      if (entity is File) _inputs.add(entity);
+      if (entity is File &&
+          _working.where((file) => file.path == entity.path).isEmpty) {
+        _inputs.add(entity);
+      }
     }
   }
 
-  /// Returns the next input to be used in the set.
+  /// Returns the next input to be used in the set. Remove it from being
+  /// accessible in the set.
   File pop() {
     final file = _inputs.first;
     _inputs.remove(file);
+    _working.add(file);
     return file;
   }
 }
