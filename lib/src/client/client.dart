@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
@@ -24,31 +25,39 @@ class Client {
   /// The file to write input data to.
   static final inputFilePath = join(Directory.systemTemp.path, 'input');
 
-  /// Start listening for data from the server.
-  void _startListener() {
-    _socket.listen((data) {
-      debug('client: received ${data.length} bytes');
-      final inFile = File(inputFilePath)
-        ..createSync()
-        ..writeAsBytes(data);
-      debug('client: wrote out to ${inFile.path}');
-      final outFile = Blackbox(inFile).process();
-      debug('client: responding to server');
-      _socket.addStream(outFile.openRead());
-    });
+  void _handleData(Uint8List data) {
+    debug('client: received ${data.length} bytes');
+    final inFile = File(inputFilePath)
+      ..createSync()
+      ..writeAsBytes(data);
+    debug('client: wrote out to ${inFile.path}');
+    final outFile = Blackbox(inFile).process();
+    debug('client: responding to server');
+    _socket.addStream(outFile.openRead());
   }
 
   /// Connect the socket to the server.
   Future<void> connect() async {
-    // TODO(tytydraco): on disconnect, wait X seconds and reconnect
     debug('client: connecting to server');
-    _socket = await Socket.connect(host, port);
-    _startListener();
+    _socket = await Socket.connect(host, port)
+      ..listen(
+        _handleData,
+        cancelOnError: true,
+        onError: error,
+      );
   }
 
-  /// Send the contents of a file.
-  Future<void> sendFile(File file) async {
-    debug('client: sending ${file.path}');
-    await _socket.addStream(file.openRead());
+  /// Connect the socket to the server. If the client gets disconnected, wait
+  /// three seconds, then retry indefinitely.
+  Future<void> connectPersistent() async {
+    debug('client: connecting to server');
+    _socket = await Socket.connect(host, port);
+    while (true) {
+      final sub = _socket.listen(_handleData);
+      await sub.asFuture<void>().catchError(error);
+      await sub.cancel();
+
+      await Future<void>.delayed(const Duration(seconds: 3));
+    }
   }
 }

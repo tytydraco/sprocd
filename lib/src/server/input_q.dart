@@ -28,12 +28,8 @@ class InputQ {
   /// Sort the input set based on file access time. Otherwise, compare based on
   /// file name.
   int _inputsCompare(File a, File b) {
-    final aChanged = a
-        .statSync()
-        .changed;
-    final bChanged = b
-        .statSync()
-        .changed;
+    final aChanged = a.statSync().changed;
+    final bChanged = b.statSync().changed;
 
     if (aChanged != bChanged) return aChanged.compareTo(bChanged);
 
