@@ -53,38 +53,47 @@ class Server {
         if (file == null) {
           debug(
             'server: nothing to serve, closing: '
-                '${client.remoteAddress.address}',
+            '${client.remoteAddress.address}',
           );
 
           client.close();
-          return;
+        } else {
+          _clients[client.remoteAddress.address] = file.path;
+
+          debug(
+            'server: sending ${file.path} to client: '
+            '${client.remoteAddress.address}',
+          );
+          client.addStream(file.openRead());
         }
-
-        _clients[client.remoteAddress.address] = file.path;
-
-        debug(
-          'server: sending ${file.path} to client: '
-              '${client.remoteAddress.address}',
-        );
-        client.addStream(file.openRead());
       }
 
       client.listen((data) {
         // If already registered, write this data to the output.
         if (_isRegistered(client)) {
-          debug(
-            'server: received from registered client: '
-                '${client.remoteAddress.address}',
+          info(
+            'server: received ${data.length} bytes from client: '
+            '${client.remoteAddress.address}',
           );
 
-          final inputPath = _clients[client.remoteAddress.address]!;
-          final outName = basename(inputPath).replaceFirst('.working', '.out');
-          final outPath = join(outputDir.path, outName);
+          if (data.length == 1 && data.first == 0) {
+            warn(
+              'server: client processing failed: '
+              '${client.remoteAddress.address}',
+            );
+          } else {
+            final inputPath = _clients[client.remoteAddress.address]!;
+            final outName = basename(inputPath).replaceFirst(
+              '.working',
+              '.out',
+            );
+            final outPath = join(outputDir.path, outName);
 
-          debug('server: writing out to $outPath');
-          File(outPath).writeAsBytesSync(data);
-          debug('server: deleting original at $inputPath');
-          File(inputPath).deleteSync();
+            debug('server: writing out to $outPath');
+            File(outPath).writeAsBytesSync(data);
+            debug('server: deleting original at $inputPath');
+            File(inputPath).deleteSync();
+          }
         }
       });
     });

@@ -14,6 +14,7 @@ void main() {
   test('Client and server file transfer', () async {
     final outputDir = Directory(join(tempDir.path, 'output'))..createSync();
     final demoFile = File(join(tempDir.path, 'demo'));
+    final outFilePath = join(tempDir.path, 'out');
 
     final inputQ = InputQ(tempDir);
     final server = Server(
@@ -21,7 +22,11 @@ void main() {
       inputQ: inputQ,
       outputDir: outputDir,
     );
-    final client = Client(host: 'localhost', port: 1234);
+    final client = Client(
+      host: 'localhost',
+      port: 1234,
+      command: 'bash -c "echo test > $outFilePath; echo $outFilePath"',
+    );
 
     await expectLater(server.start(), completes);
 

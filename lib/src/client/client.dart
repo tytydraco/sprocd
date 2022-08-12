@@ -28,15 +28,21 @@ class Client {
   /// The file to write input data to.
   static final inputFilePath = join(Directory.systemTemp.path, 'input');
 
-  void _handleData(Socket socket, Uint8List data) {
+  Future<void> _handleData(Socket socket, Uint8List data) async {
     info('client: received ${data.length} bytes');
     final inFile = File(inputFilePath)
       ..createSync()
-      ..writeAsBytes(data);
+      ..writeAsBytesSync(data);
     debug('client: wrote out to ${inFile.path}');
-    final outFile = Blackbox(inFile).process();
-    info('client: responding to server');
-    socket.addStream(outFile.openRead());
+    final outFile = await Blackbox(command).process(inFile);
+
+    if (outFile != null) {
+      info('client: responding to server');
+      await socket.addStream(outFile.openRead());
+    } else {
+      info('client: informing server of processing failure');
+      socket.add([0]);
+    }
   }
 
   /// Connect the socket to the server.
