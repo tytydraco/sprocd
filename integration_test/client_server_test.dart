@@ -25,7 +25,8 @@ void main() {
     final client = Client(
       host: 'localhost',
       port: 1234,
-      command: 'bash -c "echo test > $outFilePath; echo $outFilePath"',
+      command:
+          'bash -c "cat - > $outFilePath; cat $outFilePath; echo $outFilePath"',
     );
 
     await expectLater(server.start(), completes);

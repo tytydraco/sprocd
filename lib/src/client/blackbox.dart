@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:io/io.dart';
@@ -20,20 +21,26 @@ class Blackbox {
   Future<File?> process(File file) async {
     debug('blackbox: processing input file');
 
-    debug('blackbox: running command:  $_exec ${_args.join(' ')} ${file.path}');
-    final process = await Process.run(
+    debug('blackbox: running command: $_exec ${_args.join(' ')}');
+    final process = await Process.start(
       _exec,
-      [..._args, file.path],
+      _args,
       runInShell: true,
     );
 
-    final exitCode = process.exitCode;
+    debug('blackbox: writing path to process stdin: ${file.path}');
+    process.stdin.writeln(file.path);
+    await process.stdin.flush();
+    await process.stdin.close();
+
+    final exitCode = await process.exitCode;
     if (exitCode != 0) {
       error('blackbox: processing finished with non-zero exit code');
       return null;
     }
 
-    final output = process.stdout.toString().trim().split('\n').last;
+    final outputList = await process.stdout.transform(utf8.decoder).single;
+    final output = outputList.trim().split('\n').last;
     info('blackbox: processor gave output path: $output');
 
     final outFile = File(output);
