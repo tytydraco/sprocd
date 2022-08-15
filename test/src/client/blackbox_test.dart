@@ -15,7 +15,7 @@ void main() {
 
     test('Bad output path', () async {
       final outFile = await Blackbox('echo /nonexistent').process(testFile);
-      expect(outFile!.existsSync(), false);
+      expect(outFile, null);
     });
 
     test('Error in command', () async {
@@ -25,17 +25,11 @@ void main() {
 
     test('Real output path', () async {
       final testOutPath = join(tempDir.path, 'good');
-      final outFile = await Blackbox('touch $testOutPath; echo $testOutPath')
-          .process(testFile);
+      final testScript = File(join(tempDir.path, 'script.sh'))
+        ..writeAsStringSync('touch $testOutPath; echo $testOutPath');
+      final outFile =
+          await Blackbox('bash ${testScript.path}').process(testFile);
       expect(outFile!.existsSync(), true);
-    });
-
-    test('Real output path with working stdin', () async {
-      final testOutPath = join(tempDir.path, 'good-stdin');
-      final outFile = await Blackbox('cat - > $testOutPath; echo $testOutPath')
-          .process(testFile);
-      expect(outFile!.existsSync(), true);
-      expect(outFile.readAsStringSync(), 'example file contents');
     });
   });
 }
