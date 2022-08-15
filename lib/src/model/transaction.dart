@@ -7,7 +7,7 @@ class Transaction {
   /// Creates a new [Transaction] given some [data].
   Transaction(
     this.data, {
-    this.header,
+    this.header = '',
   });
 
   /// Creates a new [Transaction] from a list of [bytes].
@@ -15,29 +15,31 @@ class Transaction {
     final encodedHeader = bytes.sublist(0, maxHeaderLength);
     final data = bytes.sublist(maxHeaderLength);
 
-    // Decode the header if it does not only contain zeros.
-    String? header;
-    if (encodedHeader.any((e) => e != 0)) header = utf8.decode(encodedHeader);
+    // Decode the header and trim it to remove leading LFs.
+    final header = utf8.decode(encodedHeader).trim();
 
-    return Transaction(data, header: header);
+    return Transaction(
+      data,
+      header: header,
+    );
   }
 
   /// The size in bytes of the header.
   static const maxHeaderLength = 32;
 
   /// A header that precedes the data section.
-  final String? header;
+  final String header;
 
   /// The data in bytes.
   final List<int> data;
 
   /// Return the byte representation of this transaction.
   List<int> toBytes() {
-    // Fill header area with zeros to start.
-    final bytes = <int>[]..fillRange(0, maxHeaderLength, 0);
+    // Fill header area with LFs to start.
+    final bytes = List.filled(maxHeaderLength, 10, growable: true);
 
     // Add header info if needed.
-    if (header != null) {
+    if (header.isNotEmpty) {
       final encodedHeader = utf8.encode(header!);
       final headerLength = encodedHeader.length;
 
@@ -48,12 +50,12 @@ class Transaction {
         );
       }
 
-      // Insert the byte data after.
-      bytes.insertAll(
-        maxHeaderLength,
-        encodedHeader.sublist(0, maxHeaderLength),
-      );
+      // Overwrite the template header with the new header.
+      bytes.replaceRange(0, encodedHeader.length, encodedHeader);
     }
+
+    // Add data section.
+    bytes.addAll(data);
 
     return bytes;
   }

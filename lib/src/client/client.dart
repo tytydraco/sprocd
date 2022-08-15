@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
 import 'package:sprocd/src/data_encode.dart';
+import 'package:sprocd/src/model/transaction.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -32,22 +33,27 @@ class Client {
   /// Handle incoming data from the server.
   Future<void> _handleData(Socket socket, Uint8List data) async {
     info('client: received ${data.length} bytes');
-    final decodedData = decode(data);
+    final receivedTransaction = Transaction.fromBytes(decode(data));
+
+    info('client: transaction header: ${receivedTransaction.header}');
 
     final inFile = File(inputFilePath)
       ..createSync()
-      ..writeAsBytesSync(decodedData);
+      ..writeAsBytesSync(receivedTransaction.data);
     debug('client: wrote out to ${inFile.path}');
     final outFile = await Blackbox(command).process(inFile);
 
     if (outFile != null) {
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
-      final encodedBytes = encode(outFileBytes);
+      final outTransaction = Transaction(outFileBytes, header: 'hello client');
+      final encodedBytes = encode(outTransaction.toBytes());
       socket.add(encodedBytes);
     } else {
       info('client: informing server of processing failure');
-      socket.add([0]);
+      final outTransaction = Transaction([0], header: 'hello client');
+      final encodedBytes = encode(outTransaction.toBytes());
+      socket.add(encodedBytes);
     }
   }
 

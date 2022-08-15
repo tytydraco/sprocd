@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/data_encode.dart';
+import 'package:sprocd/src/model/transaction.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:stdlog/stdlog.dart';
 
@@ -38,7 +39,6 @@ class Server {
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
   Future<File?> _serveInput(Socket client) async {
-    debug('server: registering client: ${client.remoteAddress.address}');
     final file = inputQ.pop();
 
     // If there is nothing to do, disconnect them.
@@ -56,7 +56,8 @@ class Server {
       );
 
       final inFileBytes = await file.readAsBytes();
-      final encodedBytes = encode(inFileBytes);
+      final transaction = Transaction(inFileBytes, header: 'hello world');
+      final encodedBytes = encode(transaction.toBytes());
       client.add(encodedBytes);
     }
 
@@ -91,11 +92,12 @@ class Server {
         '${client.remoteAddress.address}',
       );
 
-      final decodedData = decode(data);
+      final transaction = Transaction.fromBytes(decode(data));
+      info('server: transaction header: ${transaction.header}');
 
       // Make sure we did not end in an error.
       if (!_dataIsError(data)) {
-        _writeOutput(workingFile, decodedData);
+        _writeOutput(workingFile, transaction.data);
       } else {
         warn(
           'server: client processing failed: '
