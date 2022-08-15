@@ -36,8 +36,12 @@ class Server {
     _startListener(serverSocket);
   }
 
+  /// Return true if this client has been seen before.
   bool _isRegistered(Socket client) =>
       _clients.containsKey(client.remoteAddress.address);
+
+  /// Return true if the data output signifies an error code.
+  bool _dataIsError(Uint8List data) => data.length == 1 && data.first == 0;
 
   // If the client is not yet registered, perform a handshake and send some
   // input data.
@@ -76,12 +80,14 @@ class Server {
 
     final decodedData = decode(data);
 
-    if (decodedData.length == 1 && decodedData.first == 0) {
+    // Make sure we did not end in an error.
+    if (_dataIsError(data)) {
       warn(
         'server: client processing failed: '
         '${client.remoteAddress.address}',
       );
     } else {
+      // Write out new data to output location.
       final inputPath = _clients[client.remoteAddress.address]!;
       final outName = basename(inputPath).replaceFirst(
         '.working',
