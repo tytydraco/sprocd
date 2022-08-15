@@ -49,9 +49,9 @@ Future<void> main(List<String> args) async {
       'command',
       abbr: 'c',
       help: 'Command that the client will run when data is received from the '
-          'server. The path to the input content will be sent to the stdin of '
-          'the process. The output of this command should return the path to '
-          'the output file.',
+          'server. The path to the input content will be appended to the end '
+          'of the command.',
+      defaultsTo: 'echo',
     )
     ..addFlag(
       'forever',
