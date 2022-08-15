@@ -54,26 +54,16 @@ class Client {
   Future<void> connect() async {
     info('client: connecting to server');
     final socket = await Socket.connect(host, port);
-    socket.listen((data) => _handleData(socket, data));
+    info('client: connected');
+    await socket.listen((data) => _handleData(socket, data)).asFuture(null);
+    info('client: disconnected');
   }
 
   /// Connect the socket to the server. If the client gets disconnected, wait
   /// three seconds, then retry indefinitely.
   Future<void> connectPersistent() async {
-    debug('client: connecting to server');
     while (true) {
-      final socket = await Socket.connect(host, port);
-      info('client: connected');
-
-      final sub = socket.listen((data) => _handleData(socket, data));
-      await sub.asFuture<void>().catchError(error);
-
-      info('client: disconnected');
-
-      debug('client: closing connections');
-      await sub.cancel();
-      await socket.close();
-
+      await connect();
       info('client: waiting three seconds before reconnect');
       await Future<void>.delayed(const Duration(seconds: 3));
     }
