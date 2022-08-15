@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/server/input_q.dart';
@@ -37,65 +38,71 @@ class Server {
   bool _isRegistered(Socket client) =>
       _clients.containsKey(client.remoteAddress.address);
 
+  // If the client is not yet registered, perform a handshake and send some
+  // input data.
+  void _serveInput(Socket client) {
+    debug('server: registering client: ${client.remoteAddress.address}');
+    final file = inputQ.pop();
+
+    // If there is nothing to do, disconnect them.
+    if (file == null) {
+      debug(
+        'server: nothing to serve, closing: '
+        '${client.remoteAddress.address}',
+      );
+
+      client.close();
+    } else {
+      _clients[client.remoteAddress.address] = file.path;
+
+      debug(
+        'server: sending ${file.path} to client: '
+        '${client.remoteAddress.address}',
+      );
+      client.addStream(file.openRead());
+    }
+  }
+
+  /// Handle incoming data from the client.
+  void _handleReceiveData(Socket client, Uint8List data) {
+    // If already registered, write this data to the output.
+    if (_isRegistered(client)) {
+      info(
+        'server: received ${data.length} bytes from client: '
+        '${client.remoteAddress.address}',
+      );
+
+      if (data.length == 1 && data.first == 0) {
+        warn(
+          'server: client processing failed: '
+          '${client.remoteAddress.address}',
+        );
+      } else {
+        final inputPath = _clients[client.remoteAddress.address]!;
+        final outName = basename(inputPath).replaceFirst(
+          '.working',
+          '.out',
+        );
+        final outPath = join(outputDir.path, outName);
+
+        debug('server: writing out to $outPath');
+        File(outPath).writeAsBytesSync(data);
+        debug('server: deleting original at $inputPath');
+        File(inputPath).deleteSync();
+      }
+    }
+  }
+
+  /// Handle an incoming connection from a client.
+  void _handleConnection(Socket client) {
+    debug('server: client connected: ${client.remoteAddress.address}');
+    if (!_isRegistered(client)) _serveInput(client);
+    client.listen((data) => _handleReceiveData(client, data));
+  }
+
   /// Start listening for connections from clients.
   void _startListener(ServerSocket serverSocket) {
     debug('server: starting listener');
-    serverSocket.listen((client) {
-      debug('server: client connected: ${client.remoteAddress.address}');
-
-      // If the client is not yet registered, perform a handshake and send some
-      // input data.
-      if (!_isRegistered(client)) {
-        debug('server: registering client: ${client.remoteAddress.address}');
-        final file = inputQ.pop();
-
-        // If there is nothing to do, disconnect them.
-        if (file == null) {
-          debug(
-            'server: nothing to serve, closing: '
-            '${client.remoteAddress.address}',
-          );
-
-          client.close();
-        } else {
-          _clients[client.remoteAddress.address] = file.path;
-
-          debug(
-            'server: sending ${file.path} to client: '
-            '${client.remoteAddress.address}',
-          );
-          client.addStream(file.openRead());
-        }
-      }
-
-      client.listen((data) {
-        // If already registered, write this data to the output.
-        if (_isRegistered(client)) {
-          info(
-            'server: received ${data.length} bytes from client: '
-            '${client.remoteAddress.address}',
-          );
-
-          if (data.length == 1 && data.first == 0) {
-            warn(
-              'server: client processing failed: '
-              '${client.remoteAddress.address}',
-            );
-          } else {
-            final inputPath = _clients[client.remoteAddress.address]!;
-            final outName = basename(inputPath).replaceFirst(
-              '.working',
-              '.out',
-            );
-            final outPath = join(outputDir.path, outName);
-
-            debug('server: writing out to $outPath');
-            File(outPath).writeAsBytesSync(data);
-            debug('server: deleting original at $inputPath');
-            File(inputPath).deleteSync();
-          }
-        }
-      });
-    });
+    serverSocket.listen(_handleConnection);
   }
 }
