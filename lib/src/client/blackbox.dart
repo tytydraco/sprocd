@@ -20,7 +20,7 @@ class Blackbox {
   Future<File?> process(File file) async {
     debug('blackbox: processing input file');
 
-    debug('blackbox: running command:  $_exec ${_args.join(' ')} ${file.path}');
+    debug('blackbox: running command: $_exec ${_args.join(' ')} ${file.path}');
     final process = await Process.run(
       _exec,
       [..._args, file.path],

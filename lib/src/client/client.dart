@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
+import 'package:sprocd/src/data_encode.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -30,15 +31,19 @@ class Client {
 
   Future<void> _handleData(Socket socket, Uint8List data) async {
     info('client: received ${data.length} bytes');
+    final decodedData = decode(data);
+
     final inFile = File(inputFilePath)
       ..createSync()
-      ..writeAsBytesSync(data);
+      ..writeAsBytesSync(decodedData);
     debug('client: wrote out to ${inFile.path}');
     final outFile = await Blackbox(command).process(inFile);
 
     if (outFile != null) {
       info('client: responding to server');
-      await socket.addStream(outFile.openRead());
+      final outFileStream = outFile.openRead();
+      final encodedStream = outFileStream.transform(encodeStream);
+      await socket.addStream(encodedStream);
     } else {
       info('client: informing server of processing failure');
       socket.add([0]);

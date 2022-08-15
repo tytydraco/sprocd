@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart';
+import 'package:sprocd/src/data_encode.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:stdlog/stdlog.dart';
 
@@ -59,7 +60,10 @@ class Server {
         'server: sending ${file.path} to client: '
         '${client.remoteAddress.address}',
       );
-      client.addStream(file.openRead());
+
+      final inFileStream = file.openRead();
+      final encodedStream = inFileStream.transform(encodeStream);
+      client.addStream(encodedStream);
     }
   }
 
@@ -72,7 +76,9 @@ class Server {
         '${client.remoteAddress.address}',
       );
 
-      if (data.length == 1 && data.first == 0) {
+      final decodedData = decode(data);
+
+      if (decodedData.length == 1 && decodedData.first == 0) {
         warn(
           'server: client processing failed: '
           '${client.remoteAddress.address}',
@@ -86,7 +92,7 @@ class Server {
         final outPath = join(outputDir.path, outName);
 
         debug('server: writing out to $outPath');
-        File(outPath).writeAsBytesSync(data);
+        File(outPath).writeAsBytesSync(decodedData);
         debug('server: deleting original at $inputPath');
         File(inputPath).deleteSync();
       }
