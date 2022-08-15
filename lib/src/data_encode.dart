@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:stdlog/stdlog.dart';
+
 /// Encode some data for socket communication.
 List<int> encode(List<int> bytes) {
-  return gzip.encode(bytes);
+  final result = gzip.encode(bytes);
+  debug('data_encode: encoded size ${bytes.length} -> ${result.length}');
+  return result;
 }
 
 /// A [StreamTransformer] around [encode].
@@ -15,7 +19,9 @@ final encodeStream = StreamTransformer<List<int>, List<int>>.fromHandlers(
 
 /// Decode some data for socket communication.
 List<int> decode(List<int> bytes) {
-  return gzip.decode(bytes);
+  final result = gzip.decode(bytes);
+  debug('data_encode: decoded size ${bytes.length} -> ${result.length}');
+  return result;
 }
 
 /// A [StreamTransformer] around [decode].
