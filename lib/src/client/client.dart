@@ -56,6 +56,7 @@ class Client {
     final socket = await Socket.connect(host, port);
     info('client: connected');
     await socket.listen((data) => _handleData(socket, data)).asFuture(null);
+    await socket.close();
     info('client: disconnected');
   }
 
