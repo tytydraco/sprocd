@@ -100,10 +100,14 @@ class Server {
   }
 
   /// Handle an incoming connection from a client.
-  void _handleConnection(Socket client) {
+  Future<void> _handleConnection(Socket client) async {
     debug('server: client connected: ${client.remoteAddress.address}');
+
     if (!_isRegistered(client)) _serveInput(client);
-    client.listen((data) => _handleReceiveData(client, data));
+
+    await client
+        .listen((data) => _handleReceiveData(client, data))
+        .asFuture(null);
   }
 
   /// Start listening for connections from clients.
