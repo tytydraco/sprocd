@@ -54,11 +54,7 @@ class Client {
   Future<void> connect() async {
     info('client: connecting to server');
     final socket = await Socket.connect(host, port);
-    socket.listen(
-      (data) => _handleData(socket, data),
-      cancelOnError: true,
-      onError: error,
-    );
+    socket.listen((data) => _handleData(socket, data));
   }
 
   /// Connect the socket to the server. If the client gets disconnected, wait
