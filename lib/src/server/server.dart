@@ -45,19 +45,19 @@ class Server {
     if (file == null) {
       debug(
         'server: nothing to serve, closing: '
-            '${client.remoteAddress.address}',
+        '${client.remoteAddress.address}',
       );
 
       await client.close();
     } else {
       debug(
         'server: sending ${file.path} to client: '
-            '${client.remoteAddress.address}',
+        '${client.remoteAddress.address}',
       );
 
-      final inFileStream = file.openRead();
-      final encodedStream = inFileStream.transform(encodeStream);
-      await client.addStream(encodedStream);
+      final inFileBytes = await file.readAsBytes();
+      final encodedBytes = encode(inFileBytes);
+      client.add(encodedBytes);
     }
 
     return file;
@@ -88,7 +88,7 @@ class Server {
     await client.listen((data) async {
       info(
         'server: received ${data.length} bytes from client: '
-            '${client.remoteAddress.address}',
+        '${client.remoteAddress.address}',
       );
 
       final decodedData = decode(data);
@@ -99,7 +99,7 @@ class Server {
       } else {
         warn(
           'server: client processing failed: '
-              '${client.remoteAddress.address}',
+          '${client.remoteAddress.address}',
         );
       }
 

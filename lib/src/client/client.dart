@@ -42,9 +42,9 @@ class Client {
 
     if (outFile != null) {
       info('client: responding to server');
-      final outFileStream = outFile.openRead();
-      final encodedStream = outFileStream.transform(encodeStream);
-      await socket.addStream(encodedStream);
+      final outFileBytes = await outFile.readAsBytes();
+      final encodedBytes = encode(outFileBytes);
+      socket.add(encodedBytes);
     } else {
       info('client: informing server of processing failure');
       socket.add([0]);
