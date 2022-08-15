@@ -29,6 +29,7 @@ class Client {
   /// The file to write input data to.
   static final inputFilePath = join(Directory.systemTemp.path, 'input');
 
+  /// Handle incoming data from the server.
   Future<void> _handleData(Socket socket, Uint8List data) async {
     info('client: received ${data.length} bytes');
     final decodedData = decode(data);
@@ -56,7 +57,6 @@ class Client {
     final socket = await Socket.connect(host, port);
     info('client: connected');
     await socket.listen((data) => _handleData(socket, data)).asFuture(null);
-    await socket.close();
     info('client: disconnected');
   }
 

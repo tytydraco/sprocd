@@ -25,7 +25,7 @@ class Server {
   /// The directory housing the output files.
   final Directory outputDir;
 
-  /// Setup the server socket.
+  /// Setup and start the server socket.
   Future<void> start() async {
     debug('server: starting server');
     final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
@@ -45,14 +45,14 @@ class Server {
     if (file == null) {
       debug(
         'server: nothing to serve, closing: '
-        '${client.remoteAddress.address}',
+            '${client.remoteAddress.address}',
       );
 
       client.close();
     } else {
       debug(
         'server: sending ${file.path} to client: '
-        '${client.remoteAddress.address}',
+            '${client.remoteAddress.address}',
       );
 
       final inFileStream = file.openRead();
@@ -85,10 +85,10 @@ class Server {
     if (workingFile == null) return;
 
     // Write out the output file to the disk.
-    await client.listen((data) {
+    await client.listen((data) async {
       info(
         'server: received ${data.length} bytes from client: '
-        '${client.remoteAddress.address}',
+            '${client.remoteAddress.address}',
       );
 
       final decodedData = decode(data);
@@ -99,9 +99,11 @@ class Server {
       } else {
         warn(
           'server: client processing failed: '
-          '${client.remoteAddress.address}',
+              '${client.remoteAddress.address}',
         );
       }
+
+      await client.close();
     }).asFuture(null);
   }
 
