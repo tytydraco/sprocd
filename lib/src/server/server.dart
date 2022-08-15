@@ -69,33 +69,30 @@ class Server {
 
   /// Handle incoming data from the client.
   void _handleReceiveData(Socket client, Uint8List data) {
-    // If already registered, write this data to the output.
-    if (_isRegistered(client)) {
-      info(
-        'server: received ${data.length} bytes from client: '
+    info(
+      'server: received ${data.length} bytes from client: '
+      '${client.remoteAddress.address}',
+    );
+
+    final decodedData = decode(data);
+
+    if (decodedData.length == 1 && decodedData.first == 0) {
+      warn(
+        'server: client processing failed: '
         '${client.remoteAddress.address}',
       );
+    } else {
+      final inputPath = _clients[client.remoteAddress.address]!;
+      final outName = basename(inputPath).replaceFirst(
+        '.working',
+        '.out',
+      );
+      final outPath = join(outputDir.path, outName);
 
-      final decodedData = decode(data);
-
-      if (decodedData.length == 1 && decodedData.first == 0) {
-        warn(
-          'server: client processing failed: '
-          '${client.remoteAddress.address}',
-        );
-      } else {
-        final inputPath = _clients[client.remoteAddress.address]!;
-        final outName = basename(inputPath).replaceFirst(
-          '.working',
-          '.out',
-        );
-        final outPath = join(outputDir.path, outName);
-
-        debug('server: writing out to $outPath');
-        File(outPath).writeAsBytesSync(decodedData);
-        debug('server: deleting original at $inputPath');
-        File(inputPath).deleteSync();
-      }
+      debug('server: writing out to $outPath');
+      File(outPath).writeAsBytesSync(decodedData);
+      debug('server: deleting original at $inputPath');
+      File(inputPath).deleteSync();
     }
   }
 
