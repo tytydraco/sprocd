@@ -37,7 +37,7 @@ class Server {
 
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
-  File? _serveInput(Socket client) {
+  Future<File?> _serveInput(Socket client) async {
     debug('server: registering client: ${client.remoteAddress.address}');
     final file = inputQ.pop();
 
@@ -48,7 +48,7 @@ class Server {
             '${client.remoteAddress.address}',
       );
 
-      client.close();
+      await client.close();
     } else {
       debug(
         'server: sending ${file.path} to client: '
@@ -57,7 +57,7 @@ class Server {
 
       final inFileStream = file.openRead();
       final encodedStream = inFileStream.transform(encodeStream);
-      client.addStream(encodedStream);
+      await client.addStream(encodedStream);
     }
 
     return file;
@@ -81,7 +81,7 @@ class Server {
     debug('server: client connected: ${client.remoteAddress.address}');
 
     // Serve input file to this client.
-    final workingFile = _serveInput(client);
+    final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
     // Write out the output file to the disk.
