@@ -57,7 +57,11 @@ class Transaction {
       }
 
       // Overwrite the template header with the new header.
-      bytes.replaceRange(0, encodedHeader.length, encodedHeader);
+      bytes.replaceRange(
+        0,
+        encodedHeader.length.clamp(0, maxHeaderLength),
+        encodedHeader,
+      );
     }
 
     // Add data section.
