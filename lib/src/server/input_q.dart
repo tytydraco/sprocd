@@ -8,7 +8,7 @@ import 'package:stdlog/stdlog.dart';
 class InputQ {
   /// Creates a new [InputQ] given an [inputDir].
   InputQ(this.inputDir) {
-    _watchForChanges();
+    _watchForNewInputs();
   }
 
   /// The directory housing the input files.
@@ -17,11 +17,11 @@ class InputQ {
   /// The list of input files.
   late final _inputs = SplayTreeSet<File>(_inputsCompare);
 
-  /// Perform a scan whenever the list of files change.
-  void _watchForChanges() {
-    inputDir.watch().listen((_) {
-      debug('input_q: changes detected');
-      if (inputDir.existsSync()) scan();
+  /// Perform a scan whenever a file gets added.
+  void _watchForNewInputs() {
+    inputDir.watch(events: FileSystemEvent.create).listen((event) async {
+      debug('input_q: new file added: ${event.path}');
+      if (inputDir.existsSync()) await scan();
     });
   }
 
@@ -44,13 +44,11 @@ class InputQ {
 
   /// Scan for new files in the [inputDir] and update the input list.
   /// Do not add any files that are already marked as working files.
-  void scan() {
-    debug('input_q: scanning');
-
+  Future<void> scan() async {
     _inputs.clear();
-    for (final entity in inputDir.listSync()) {
+    await for (final entity in inputDir.list()) {
       if (entity is File && !entity.path.endsWith('.working')) {
-        debug('input_q: found ${entity.path}');
+        debug('input_q: scanned ${entity.path}');
         _inputs.add(entity);
       }
     }
@@ -61,9 +59,11 @@ class InputQ {
   /// Returns the next input to be used in the set. Remove it from being
   /// accessible in the set. Rename it to indicate that it is now a working
   /// file.
-  File? pop() {
-    debug('input_q: pop requested');
-    if (_inputs.isEmpty) return null;
+  Future<File?> pop() async {
+    if (_inputs.isEmpty) {
+      debug('input_q: pop requested but nothing to serve');
+      return null;
+    }
 
     final file = _inputs.first;
     _inputs.remove(file);
@@ -72,7 +72,7 @@ class InputQ {
 
     final newName = '${basename(file.path)}.working';
     final newPath = join(file.parent.path, newName);
-    file.renameSync(newPath);
+    await file.rename(newPath);
 
     debug('input_q: moved original to $newPath');
 

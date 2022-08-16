@@ -38,7 +38,7 @@ class Server {
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
   Future<File?> _serveInput(Socket client) async {
-    final file = inputQ.pop();
+    final file = await inputQ.pop();
 
     // If there is nothing to do, disconnect them.
     if (file == null) {
@@ -65,15 +65,15 @@ class Server {
 
   /// Write out new data from the client to the output location given the
   /// [original] file and the output [data].
-  void _writeOutput(File original, List<int> data) {
+  Future<void> _writeOutput(File original, List<int> data) async {
     final inputPath = original.path;
     final outName = basename(inputPath).replaceFirst('.working', '.out');
     final outPath = join(outputDir.path, outName);
 
     debug('server: writing out to $outPath');
-    File(outPath).writeAsBytesSync(data);
+    await File(outPath).writeAsBytes(data);
     debug('server: deleting original at $inputPath');
-    File(inputPath).deleteSync();
+    await File(inputPath).delete();
   }
 
   /// Handle an incoming connection from a client.
@@ -96,7 +96,7 @@ class Server {
 
       // Make sure we did not end in an error.
       if (!_dataIsError(transaction.data)) {
-        _writeOutput(workingFile, transaction.data);
+        await _writeOutput(workingFile, transaction.data);
       } else {
         warn(
           'server: client processing failed: '

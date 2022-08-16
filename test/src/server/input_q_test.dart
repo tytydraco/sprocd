@@ -25,10 +25,10 @@ void main() {
       test1.deleteSync();
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      inputQ.scan();
+      await inputQ.scan();
 
       expect(inputQ.numberOfInputs, 1);
-      expect(inputQ.pop()!.path, '${test2.path}.working');
+      expect((await inputQ.pop())!.path, '${test2.path}.working');
       expect(inputQ.numberOfInputs, 0);
     });
 
@@ -39,13 +39,16 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
       final third = File(join(tempDir.path, 'third'))..createSync();
 
-      inputQ.scan();
+      await inputQ.scan();
 
       expect(inputQ.numberOfInputs, 3);
+      expect((await inputQ.pop())!.path, '${first.path}.working');
 
-      expect(inputQ.pop()!.path, '${first.path}.working');
-      expect(inputQ.pop()!.path, '${second.path}.working');
-      expect(inputQ.pop()!.path, '${third.path}.working');
+      expect(inputQ.numberOfInputs, 2);
+      expect((await inputQ.pop())!.path, '${second.path}.working');
+
+      expect(inputQ.numberOfInputs, 1);
+      expect((await inputQ.pop())!.path, '${third.path}.working');
 
       expect(inputQ.numberOfInputs, 0);
     });
@@ -55,13 +58,16 @@ void main() {
       final c = File(join(tempDir.path, 'c'))..createSync();
       final a = File(join(tempDir.path, 'a'))..createSync();
 
-      inputQ.scan();
+      await inputQ.scan();
 
       expect(inputQ.numberOfInputs, 3);
+      expect((await inputQ.pop())!.path, '${a.path}.working');
 
-      expect(inputQ.pop()!.path, '${a.path}.working');
-      expect(inputQ.pop()!.path, '${b.path}.working');
-      expect(inputQ.pop()!.path, '${c.path}.working');
+      expect(inputQ.numberOfInputs, 2);
+      expect((await inputQ.pop())!.path, '${b.path}.working');
+
+      expect(inputQ.numberOfInputs, 1);
+      expect((await inputQ.pop())!.path, '${c.path}.working');
 
       expect(inputQ.numberOfInputs, 0);
     });

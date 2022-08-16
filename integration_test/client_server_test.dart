@@ -42,7 +42,7 @@ void main() {
       await expectLater(server.start(), completes);
     });
 
-    test('Create demo input file', () {
+    test('Create demo input file', () async {
       expect(inputQ.numberOfInputs, 0);
 
       serverInputFile
@@ -50,7 +50,7 @@ void main() {
         ..writeAsStringSync('hello world 12345');
 
       // Force a scan.
-      inputQ.scan();
+      await inputQ.scan();
 
       expect(inputQ.numberOfInputs, 1);
     });
