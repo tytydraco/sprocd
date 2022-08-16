@@ -32,7 +32,9 @@ class Server {
   Future<void> start() async {
     debug('server: starting server');
     final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
-    _startListener(serverSocket);
+
+    debug('server: starting listener');
+    serverSocket.listen(_handleConnection);
   }
 
   /// Return true if the data output signifies an error code.
@@ -49,7 +51,6 @@ class Server {
         'server: nothing to serve, closing: '
         '${client.remoteAddress.address}',
       );
-
       await client.close();
     } else {
       info(
@@ -64,21 +65,10 @@ class Server {
       final inFileBytes = await file.readAsBytes();
       final transaction = _transactionManager.make(inFileBytes);
       client.add(transaction.toBytes());
+      await client.flush();
     }
 
     return file;
-  }
-
-  /// Write out new data from the client to the output location given the
-  /// [original] file and the output [data].
-  Future<void> _writeOutput(File original, List<int> data) async {
-    final outName = basename(original.path).replaceFirst('.working', '.out');
-    final outPath = join(outputDir.path, outName);
-
-    debug('server: writing out to $outPath');
-    await File(outPath).writeAsBytes(data);
-    debug('server: deleting original at ${original.path}');
-    await original.delete();
   }
 
   /// Handle an incoming connection from a client.
@@ -90,31 +80,32 @@ class Server {
     if (workingFile == null) return;
 
     // Write out the output file to the disk.
-    await client.listen((data) async {
-      info(
-        'server: received ${data.length} bytes from client: '
+    final data = await client.single;
+    info(
+      'server: received ${data.length} bytes from client: '
+      '${client.remoteAddress.address}',
+    );
+
+    final transaction = EncodedTransaction.fromBytes(data);
+
+    // Make sure we did not end in an error.
+    if (!_dataIsError(transaction.data)) {
+      final outName =
+          basename(workingFile.path).replaceFirst('.working', '.out');
+      final outPath = join(outputDir.path, outName);
+
+      debug('server: writing out to $outPath');
+      await File(outPath).writeAsBytes(transaction.data);
+      debug('server: deleting original at ${workingFile.path}');
+      await workingFile.delete();
+    } else {
+      warn(
+        'server: client processing failed: '
         '${client.remoteAddress.address}',
       );
+    }
 
-      final transaction = EncodedTransaction.fromBytes(data);
-
-      // Make sure we did not end in an error.
-      if (!_dataIsError(transaction.data)) {
-        await _writeOutput(workingFile, transaction.data);
-      } else {
-        warn(
-          'server: client processing failed: '
-          '${client.remoteAddress.address}',
-        );
-      }
-
-      await client.close();
-    }).asFuture(null);
-  }
-
-  /// Start listening for connections from clients.
-  void _startListener(ServerSocket serverSocket) {
-    debug('server: starting listener');
-    serverSocket.listen(_handleConnection);
+    // We are done, disconnect the client.
+    await client.close();
   }
 }

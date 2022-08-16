@@ -64,6 +64,9 @@ class Client {
       socket.add(outTransaction.toBytes());
     }
 
+    await socket.flush();
+    await socket.close();
+
     // Delete input file after we processed it.
     await inputFile.delete();
   }
