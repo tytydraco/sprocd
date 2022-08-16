@@ -80,7 +80,7 @@ class Server {
     if (workingFile == null) return;
 
     // Write out the output file to the disk.
-    final data = await client.single;
+    final data = await client.first;
     info(
       'server: received ${data.length} bytes from client: '
       '${client.remoteAddress.address}',

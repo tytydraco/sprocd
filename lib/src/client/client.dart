@@ -31,7 +31,7 @@ class Client {
   static final inputFile = File(join(Directory.systemTemp.path, 'input'));
 
   /// Handle incoming data from the server.
-  Future<void> _handleData(Socket socket, Uint8List data) async {
+  Future<void> _handleData(Socket server, Uint8List data) async {
     info('client: received ${data.length} bytes');
     final receivedTransaction = EncodedTransaction.fromBytes(data);
     final metadataHeader =
@@ -56,16 +56,16 @@ class Client {
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
       final outTransaction = EncodedTransaction(outFileBytes);
-      socket.add(outTransaction.toBytes());
+      server.add(outTransaction.toBytes());
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
       final outTransaction = EncodedTransaction(Uint8List.fromList([0]));
-      socket.add(outTransaction.toBytes());
+      server.add(outTransaction.toBytes());
     }
 
-    await socket.flush();
-    await socket.close();
+    await server.flush();
+    await server.close();
 
     // Delete input file after we processed it.
     await inputFile.delete();
@@ -74,9 +74,15 @@ class Client {
   /// Connect the socket to the server.
   Future<void> connect() async {
     info('client: connecting to server');
-    final socket = await Socket.connect(host, port);
+    final server = await Socket.connect(host, port);
     info('client: connected');
-    await socket.listen((data) => _handleData(socket, data)).asFuture(null);
+
+    // Get the first chunk of data sent by the server. This should contain our
+    // input file if we were given one.
+
+    //TODO(tytydraco): catch error if cancels early (error from .first), use single in server side
+    final data = await server.first;
+    await _handleData(server, data);
     info('client: disconnected');
   }
 
