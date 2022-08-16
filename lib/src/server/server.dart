@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/transaction.dart';
+import 'package:sprocd/src/model/encoded_transaction.dart';
 import 'package:sprocd/src/server/input_q.dart';
-import 'package:sprocd/src/utils/data_encode.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
@@ -55,9 +54,9 @@ class Server {
       );
 
       final inFileBytes = await file.readAsBytes();
-      final transaction = Transaction(inFileBytes, header: 'hello world');
-      final encodedBytes = encode(transaction.toBytes());
-      client.add(encodedBytes);
+      final transaction =
+          EncodedTransaction(inFileBytes, header: 'hello world');
+      client.add(transaction.toBytes());
     }
 
     return file;
@@ -91,7 +90,7 @@ class Server {
         '${client.remoteAddress.address}',
       );
 
-      final transaction = Transaction.fromBytes(decode(data));
+      final transaction = EncodedTransaction.fromBytes(data);
       info('server: transaction header: ${transaction.header}');
 
       // Make sure we did not end in an error.

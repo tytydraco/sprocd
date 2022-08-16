@@ -3,8 +3,7 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
-import 'package:sprocd/src/model/transaction.dart';
-import 'package:sprocd/src/utils/data_encode.dart';
+import 'package:sprocd/src/model/encoded_transaction.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -33,7 +32,7 @@ class Client {
   /// Handle incoming data from the server.
   Future<void> _handleData(Socket socket, Uint8List data) async {
     info('client: received ${data.length} bytes');
-    final receivedTransaction = Transaction.fromBytes(decode(data));
+    final receivedTransaction = EncodedTransaction.fromBytes(data);
 
     // TODO(tytydraco): log appropriate headers
     info('client: transaction header: ${receivedTransaction.header}');
@@ -48,16 +47,15 @@ class Client {
       // Processing succeeded.
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
-      final outTransaction = Transaction(outFileBytes, header: 'hello client');
-      final encodedBytes = encode(outTransaction.toBytes());
-      socket.add(encodedBytes);
+      final outTransaction =
+          EncodedTransaction(outFileBytes, header: 'hello client');
+      socket.add(outTransaction.toBytes());
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
       final outTransaction =
-      Transaction(Uint8List.fromList([0]), header: 'hello client');
-      final encodedBytes = encode(outTransaction.toBytes());
-      socket.add(encodedBytes);
+          EncodedTransaction(Uint8List.fromList([0]), header: 'hello client');
+      socket.add(outTransaction.toBytes());
     }
 
     // Delete input file after we processed it.
