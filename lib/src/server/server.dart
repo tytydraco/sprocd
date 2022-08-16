@@ -72,14 +72,13 @@ class Server {
   /// Write out new data from the client to the output location given the
   /// [original] file and the output [data].
   Future<void> _writeOutput(File original, List<int> data) async {
-    final inputPath = original.path;
-    final outName = basename(inputPath).replaceFirst('.working', '.out');
+    final outName = basename(original.path).replaceFirst('.working', '.out');
     final outPath = join(outputDir.path, outName);
 
     debug('server: writing out to $outPath');
     await File(outPath).writeAsBytes(data);
-    debug('server: deleting original at $inputPath');
-    await File(inputPath).delete();
+    debug('server: deleting original at ${original.path}');
+    await original.delete();
   }
 
   /// Handle an incoming connection from a client.
