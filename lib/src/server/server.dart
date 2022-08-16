@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sprocd/src/model/encoded_transaction.dart';
 import 'package:sprocd/src/server/input_q.dart';
+import 'package:sprocd/src/utils/transaction_manager.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
@@ -23,6 +24,9 @@ class Server {
 
   /// The directory housing the output files.
   final Directory outputDir;
+
+  /// Manager to keep track of transactions.
+  final _transactionManager = TransactionManager();
 
   /// Setup and start the server socket.
   Future<void> start() async {
@@ -48,14 +52,17 @@ class Server {
 
       await client.close();
     } else {
-      debug(
-        'server: sending ${file.path} to client: '
-        '${client.remoteAddress.address}',
+      info(
+        'server: sending transaction to client: \n'
+        '=====================================\n'
+        'CLIENT: ${client.remoteAddress.address}\n'
+        'DATE: ${_transactionManager.initTime.toIso8601String()}\n'
+        'ID: ${_transactionManager.id}\n'
+        '=====================================',
       );
 
       final inFileBytes = await file.readAsBytes();
-      final transaction =
-          EncodedTransaction(inFileBytes, header: 'hello world');
+      final transaction = _transactionManager.make(inFileBytes);
       client.add(transaction.toBytes());
     }
 
@@ -79,7 +86,7 @@ class Server {
   Future<void> _handleConnection(Socket client) async {
     debug('server: client connected: ${client.remoteAddress.address}');
 
-    // Serve input file to this client.
+    // Serve input file to this client if one exists.
     final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
@@ -91,7 +98,6 @@ class Server {
       );
 
       final transaction = EncodedTransaction.fromBytes(data);
-      info('server: transaction header: ${transaction.header}');
 
       // Make sure we did not end in an error.
       if (!_dataIsError(transaction.data)) {

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
 import 'package:sprocd/src/model/encoded_transaction.dart';
+import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -33,9 +34,16 @@ class Client {
   Future<void> _handleData(Socket socket, Uint8List data) async {
     info('client: received ${data.length} bytes');
     final receivedTransaction = EncodedTransaction.fromBytes(data);
+    final metadataHeader =
+        MetadataHeader.fromString(receivedTransaction.header);
 
-    // TODO(tytydraco): log appropriate headers
-    info('client: transaction header: ${receivedTransaction.header}');
+    info(
+      'client: handling transaction for session: \n'
+      '=====================================\n'
+      'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'ID: ${metadataHeader.id}\n'
+      '=====================================',
+    );
 
     await inputFile.create();
     await inputFile.writeAsBytes(receivedTransaction.data);
@@ -47,14 +55,12 @@ class Client {
       // Processing succeeded.
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
-      final outTransaction =
-          EncodedTransaction(outFileBytes, header: 'hello client');
+      final outTransaction = EncodedTransaction(outFileBytes);
       socket.add(outTransaction.toBytes());
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
-      final outTransaction =
-          EncodedTransaction(Uint8List.fromList([0]), header: 'hello client');
+      final outTransaction = EncodedTransaction(Uint8List.fromList([0]));
       socket.add(outTransaction.toBytes());
     }
 
