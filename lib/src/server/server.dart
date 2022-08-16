@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/model/transaction.dart';
@@ -34,7 +33,7 @@ class Server {
   }
 
   /// Return true if the data output signifies an error code.
-  bool _dataIsError(Uint8List data) => data.length == 1 && data.first == 0;
+  bool _dataIsError(List<int> data) => data.length == 1 && data.first == 0;
 
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
@@ -96,7 +95,7 @@ class Server {
       info('server: transaction header: ${transaction.header}');
 
       // Make sure we did not end in an error.
-      if (!_dataIsError(data)) {
+      if (!_dataIsError(transaction.data)) {
         _writeOutput(workingFile, transaction.data);
       } else {
         warn(
