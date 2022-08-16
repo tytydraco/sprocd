@@ -49,8 +49,11 @@ void main() {
         ..createSync()
         ..writeAsStringSync('hello world 12345');
 
-      // Force a scan.
-      await inputQ.scan();
+      // Wait for InputQ to detect our change on its own.
+      await Future.doWhile(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        return inputQ.numberOfInputs == 0;
+      });
 
       expect(inputQ.numberOfInputs, 1);
     });

@@ -22,13 +22,18 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
       final test2 = File(join(tempDir.path, 'test2'))..createSync();
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      test1.deleteSync();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      await inputQ.scan();
+      await Future.doWhile(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        return inputQ.numberOfInputs != 2;
+      });
+
+      expect(inputQ.numberOfInputs, 2);
+      expect((await inputQ.pop())!.path, '${test1.path}.working');
 
       expect(inputQ.numberOfInputs, 1);
       expect((await inputQ.pop())!.path, '${test2.path}.working');
+
       expect(inputQ.numberOfInputs, 0);
     });
 
