@@ -52,7 +52,8 @@ class Client {
       socket.add(encodedBytes);
     } else {
       info('client: informing server of processing failure');
-      final outTransaction = Transaction([0], header: 'hello client');
+      final outTransaction =
+          Transaction(Uint8List.fromList([0]), header: 'hello client');
       final encodedBytes = encode(outTransaction.toBytes());
       socket.add(encodedBytes);
     }
