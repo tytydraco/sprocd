@@ -15,8 +15,11 @@ class Transaction {
     final encodedHeader = bytes.sublist(0, maxHeaderLength);
     final data = bytes.sublist(maxHeaderLength);
 
-    // Decode the header and trim it to remove leading LFs.
-    final header = utf8.decode(encodedHeader).trim();
+    // Decode the header up to the last non-null character.
+    final headerLastNonNullIdx = encodedHeader.lastIndexWhere((e) => e != 0);
+    final encodedHeaderTrimmed =
+        encodedHeader.sublist(0, headerLastNonNullIdx + 1);
+    final header = ascii.decode(encodedHeaderTrimmed);
 
     return Transaction(
       data,
@@ -35,12 +38,12 @@ class Transaction {
 
   /// Return the byte representation of this transaction.
   List<int> toBytes() {
-    // Fill header area with LFs to start.
-    final bytes = List.filled(maxHeaderLength, 10, growable: true);
+    // Fill header area with NULLs to start.
+    final bytes = List.filled(maxHeaderLength, 0, growable: true);
 
     // Add header info if needed.
     if (header.isNotEmpty) {
-      final encodedHeader = utf8.encode(header!);
+      final encodedHeader = ascii.encode(header);
       final headerLength = encodedHeader.length;
 
       if (headerLength > maxHeaderLength) {

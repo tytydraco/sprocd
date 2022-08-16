@@ -35,6 +35,7 @@ class Client {
     info('client: received ${data.length} bytes');
     final receivedTransaction = Transaction.fromBytes(decode(data));
 
+    // TODO(tytydraco): log appropriate headers
     info('client: transaction header: ${receivedTransaction.header}');
 
     final inFile = File(inputFilePath)
