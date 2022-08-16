@@ -16,10 +16,13 @@ class Transaction {
     final data = bytes.sublist(maxHeaderLength);
 
     // Decode the header up to the last non-null character.
+    var header = '';
     final headerLastNonNullIdx = encodedHeader.lastIndexWhere((e) => e != 0);
-    final encodedHeaderTrimmed =
-        encodedHeader.sublist(0, headerLastNonNullIdx + 1);
-    final header = ascii.decode(encodedHeaderTrimmed);
+    if (headerLastNonNullIdx != -1) {
+      final encodedHeaderTrimmed =
+          encodedHeader.sublist(0, headerLastNonNullIdx + 1);
+      header = ascii.decode(encodedHeaderTrimmed);
+    }
 
     return Transaction(
       data,
