@@ -28,7 +28,7 @@ class Client {
   final String command;
 
   /// The file to write input data to.
-  static final inputFilePath = join(Directory.systemTemp.path, 'input');
+  static final inputFile = File(join(Directory.systemTemp.path, 'input'));
 
   /// Handle incoming data from the server.
   Future<void> _handleData(Socket socket, Uint8List data) async {
@@ -38,25 +38,30 @@ class Client {
     // TODO(tytydraco): log appropriate headers
     info('client: transaction header: ${receivedTransaction.header}');
 
-    final inFile = File(inputFilePath)
-      ..createSync()
-      ..writeAsBytesSync(receivedTransaction.data);
-    debug('client: wrote out to ${inFile.path}');
-    final outFile = await Blackbox(command).process(inFile);
+    await inputFile.create();
+    await inputFile.writeAsBytes(receivedTransaction.data);
+    debug('client: wrote out to ${inputFile.path}');
 
+    // Process the input file.
+    final outFile = await Blackbox(command).process(inputFile);
     if (outFile != null) {
+      // Processing succeeded.
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
       final outTransaction = Transaction(outFileBytes, header: 'hello client');
       final encodedBytes = encode(outTransaction.toBytes());
       socket.add(encodedBytes);
     } else {
+      // Processing failed.
       info('client: informing server of processing failure');
       final outTransaction =
-          Transaction(Uint8List.fromList([0]), header: 'hello client');
+      Transaction(Uint8List.fromList([0]), header: 'hello client');
       final encodedBytes = encode(outTransaction.toBytes());
       socket.add(encodedBytes);
     }
+
+    // Delete input file after we processed it.
+    await inputFile.delete();
   }
 
   /// Connect the socket to the server.
