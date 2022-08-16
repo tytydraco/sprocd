@@ -59,9 +59,17 @@ void main() {
     });
 
     test('Insert some demo files with same modify times', () async {
-      final b = File(join(tempDir.path, 'b'))..createSync();
-      final c = File(join(tempDir.path, 'c'))..createSync();
-      final a = File(join(tempDir.path, 'a'))..createSync();
+      final forceTime = DateTime.now();
+
+      final b = File(join(tempDir.path, 'b'))
+        ..createSync()
+        ..setLastModifiedSync(forceTime);
+      final c = File(join(tempDir.path, 'c'))
+        ..createSync()
+        ..setLastModifiedSync(forceTime);
+      final a = File(join(tempDir.path, 'a'))
+        ..createSync()
+        ..setLastModifiedSync(forceTime);
 
       await inputQ.scan();
 
