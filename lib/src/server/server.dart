@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:path/path.dart';
-import 'package:sprocd/src/data_encode.dart';
 import 'package:sprocd/src/model/transaction.dart';
 import 'package:sprocd/src/server/input_q.dart';
+import 'package:sprocd/src/utils/data_encode.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to

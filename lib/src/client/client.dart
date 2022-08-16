@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
-import 'package:sprocd/src/data_encode.dart';
 import 'package:sprocd/src/model/transaction.dart';
+import 'package:sprocd/src/utils/data_encode.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
