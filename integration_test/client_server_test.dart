@@ -7,10 +7,10 @@ import 'package:sprocd/src/server/server.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final tempDir = Directory.systemTemp.createTempSync();
-  tearDownAll(() => tempDir.deleteSync(recursive: true));
-
   group('Client and server integration', () {
+    final tempDir = Directory.systemTemp.createTempSync();
+    tearDownAll(() => tempDir.deleteSync(recursive: true));
+
     final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();

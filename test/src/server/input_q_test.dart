@@ -5,16 +5,16 @@ import 'package:sprocd/src/server/input_q.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final tempDir = Directory.systemTemp.createTempSync();
-
-  setUp(tempDir.createSync);
-  tearDown(
-    () => tempDir.listSync().forEach((element) {
-      element.deleteSync(recursive: true);
-    }),
-  );
-
   group('InputQ', () {
+    final tempDir = Directory.systemTemp.createTempSync();
+
+    setUp(tempDir.createSync);
+    tearDown(
+      () => tempDir.listSync().forEach((element) {
+        element.deleteSync(recursive: true);
+      }),
+    );
+
     final inputQ = InputQ(tempDir);
 
     test('Automatic scan', () async {
