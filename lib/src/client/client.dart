@@ -35,14 +35,14 @@ class Client {
     info('client: received ${data.length} bytes');
     final receivedTransaction = EncodedTransaction.fromBytes(data);
     final metadataHeader =
-        MetadataHeader.fromString(receivedTransaction.header);
+    MetadataHeader.fromString(receivedTransaction.header);
 
     info(
       'client: handling transaction for session: \n'
-      '=====================================\n'
-      'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
-      '=====================================',
+          '=====================================\n'
+          'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+          'ID: ${metadataHeader.id}\n'
+          '=====================================',
     );
 
     final tempDir = await Directory.systemTemp.createTemp();
@@ -79,8 +79,9 @@ class Client {
     await inputFile.delete();
   }
 
-  /// Connect the socket to the server.
-  Future<void> connect() async {
+  /// Connect the socket to the server. Returns false if the server didn't have
+  /// any data for us, and true if it did.
+  Future<bool> connect() async {
     info('client: connecting to server');
     final server = await Socket.connect(
       host,
@@ -97,19 +98,25 @@ class Client {
     final data = await server.take(1).toList();
     if (data.isNotEmpty) {
       await _handleData(server, data.first);
+      info('client: processed successfully');
+      return true;
     } else {
       info('client: nothing to process');
+      return false;
     }
-    info('client: disconnected');
   }
 
   /// Connect the socket to the server. If the client gets disconnected, wait
   /// three seconds, then retry indefinitely.
   Future<void> connectPersistent() async {
     while (true) {
-      await connect();
-      info('client: waiting three seconds before reconnect');
-      await Future<void>.delayed(const Duration(seconds: 3));
+      final processed = await connect();
+
+      // Delay a reconnect if we didn't have any data.
+      if (!processed) {
+        info('client: waiting three seconds before reconnect');
+        await Future<void>.delayed(const Duration(seconds: 3));
+      }
     }
   }
 }
