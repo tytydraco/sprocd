@@ -38,11 +38,11 @@ void main() {
       );
 
       await server.start();
-      expect(server.start(), throwsStateError);
+      await expectLater(server.start(), throwsStateError);
       await server.stop();
     });
 
-    test('Stop server when it is already dead', () {
+    test('Stop server when it is already dead', () async {
       final inputQ = InputQ(serverInputDir);
       final server = Server(
         port: 5555,
@@ -50,7 +50,7 @@ void main() {
         outputDir: serverOutputDir,
       );
 
-      expect(server.stop(), throwsStateError);
+      await expectLater(server.stop(), throwsStateError);
     });
 
     test('No inputs', () async {
@@ -80,9 +80,9 @@ void main() {
         outputDir: serverOutputDir,
       );
 
-      File(join(serverInputDir.path, 'dummyInput'))
-        ..createSync()
-        ..writeAsStringSync('hello world');
+      final dummyInput = File(join(serverInputDir.path, 'dummyInput'));
+      await dummyInput.create();
+      await dummyInput.writeAsString('hello world');
 
       await server.start();
 
@@ -122,9 +122,9 @@ void main() {
 
       // Create several input files.
       for (var i = 0; i < multiClientCount; i++) {
-        File(join(serverInputDir.path, 'dummyInput$i'))
-          ..createSync()
-          ..writeAsStringSync('hello world $i');
+        final dummyInput = File(join(serverInputDir.path, 'dummyInput$i'));
+        await dummyInput.create();
+        await dummyInput.writeAsString('hello world $i');
       }
 
       await server.start();

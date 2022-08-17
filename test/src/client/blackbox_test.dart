@@ -25,8 +25,8 @@ void main() {
 
     test('Real output path', () async {
       final testOutPath = join(tempDir.path, 'good');
-      final testScript = File(join(tempDir.path, 'script.sh'))
-        ..writeAsStringSync('touch $testOutPath; echo $testOutPath');
+      final testScript = File(join(tempDir.path, 'script.sh'));
+      await testScript.writeAsString('touch $testOutPath; echo $testOutPath');
       final outFile =
           await Blackbox('bash ${testScript.path}').process(testFile);
       expect(outFile!.existsSync(), true);

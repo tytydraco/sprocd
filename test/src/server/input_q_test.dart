@@ -18,9 +18,11 @@ void main() {
     final inputQ = InputQ(tempDir);
 
     test('Automatic scan', () async {
-      final test1 = File(join(tempDir.path, 'test1'))..createSync();
+      final test1 = File(join(tempDir.path, 'test1'));
+      await test1.create();
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      final test2 = File(join(tempDir.path, 'test2'))..createSync();
+      final test2 = File(join(tempDir.path, 'test2'));
+      await test2.create();
       await Future<void>.delayed(const Duration(milliseconds: 100));
 
       await Future.doWhile(() async {
@@ -38,11 +40,14 @@ void main() {
     });
 
     test('Insert some demo files with difference in modify times', () async {
-      final first = File(join(tempDir.path, 'first'))..createSync();
+      final first = File(join(tempDir.path, 'first'));
+      await first.create();
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      final second = File(join(tempDir.path, 'second'))..createSync();
+      final second = File(join(tempDir.path, 'second'));
+      await second.create();
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      final third = File(join(tempDir.path, 'third'))..createSync();
+      final third = File(join(tempDir.path, 'third'));
+      await third.create();
 
       await inputQ.scan();
 
@@ -61,15 +66,15 @@ void main() {
     test('Insert some demo files with same modify times', () async {
       final forceTime = DateTime.now();
 
-      final b = File(join(tempDir.path, 'b'))
-        ..createSync()
-        ..setLastModifiedSync(forceTime);
-      final c = File(join(tempDir.path, 'c'))
-        ..createSync()
-        ..setLastModifiedSync(forceTime);
-      final a = File(join(tempDir.path, 'a'))
-        ..createSync()
-        ..setLastModifiedSync(forceTime);
+      final b = File(join(tempDir.path, 'b'));
+      await b.create();
+      await b.setLastModified(forceTime);
+      final c = File(join(tempDir.path, 'c'));
+      await c.create();
+      await c.setLastModified(forceTime);
+      final a = File(join(tempDir.path, 'a'));
+      await a.create();
+      await a.setLastModified(forceTime);
 
       await inputQ.scan();
 
