@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
 import 'package:sprocd/src/model/encoded_transaction.dart';
 import 'package:sprocd/src/model/metadata_header.dart';
@@ -15,6 +14,7 @@ class Client {
     required this.host,
     required this.port,
     required this.command,
+    this.inputFilePath = '.tmp',
   });
 
   /// The host to connect to.
@@ -30,24 +30,25 @@ class Client {
   /// After this long, the connection has failed.
   static const connectTimeout = Duration(seconds: 10);
 
-  /// The file to write input data to.
-  static final inputFile = File(join(Directory.systemTemp.path, 'input'));
+  /// The file path to write input from the server to.
+  final String inputFilePath;
 
   /// Handle incoming data from the server.
   Future<void> _handleData(Socket server, Uint8List data) async {
     info('client: received ${data.length} bytes');
     final receivedTransaction = EncodedTransaction.fromBytes(data);
     final metadataHeader =
-    MetadataHeader.fromString(receivedTransaction.header);
+        MetadataHeader.fromString(receivedTransaction.header);
 
     info(
       'client: handling transaction for session: \n'
-          '=====================================\n'
-          'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-          'ID: ${metadataHeader.id}\n'
-          '=====================================',
+      '=====================================\n'
+      'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'ID: ${metadataHeader.id}\n'
+      '=====================================',
     );
 
+    final inputFile = File(inputFilePath);
     await inputFile.create();
     await inputFile.writeAsBytes(receivedTransaction.data);
     debug('client: wrote out to ${inputFile.path}');
