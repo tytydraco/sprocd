@@ -59,9 +59,6 @@ void main() {
     });
 
     test('Check if client produced output', () async {
-      // Input file on client should be gone.
-      expect(File(client.inputFilePath).existsSync(), false);
-
       // Ensure client blackbox output is correct.
       expect(await clientOutputFile.readAsString(), 'output!');
     });

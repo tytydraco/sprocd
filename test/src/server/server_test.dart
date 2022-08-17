@@ -148,7 +148,9 @@ void main() {
       }
 
       // Create equally as many clients as there are input files.
-      await Future.wait<void>(List.generate(multiClientCount, createClients));
+      for (var i = 0; i < multiClientCount; i++) {
+        await createClients(i);
+      }
 
       await server.stop();
 
