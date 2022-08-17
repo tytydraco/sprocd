@@ -57,6 +57,7 @@ class Server {
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
   Future<File?> _serveInput(Socket client) async {
+    await inputQ.scan();
     final file = await inputQ.pop();
 
     // If there is nothing to do, disconnect them.

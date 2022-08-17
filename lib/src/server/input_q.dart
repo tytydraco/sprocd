@@ -14,7 +14,7 @@ class InputQ {
   /// The directory housing the input files.
   final Directory inputDir;
 
-  /// The list of input files.
+  /// The list of input files sorted by modify time, and then by name.
   late final _inputs = SplayTreeSet<File>(_inputsCompare);
 
   /// Perform a scan whenever a file gets added.
