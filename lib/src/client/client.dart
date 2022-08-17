@@ -59,12 +59,18 @@ class Client {
       // Processing succeeded.
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
-      final outTransaction = EncodedTransaction(outFileBytes);
+      final outTransaction = EncodedTransaction(
+        outFileBytes,
+        header: receivedTransaction.header,
+      );
       server.add(outTransaction.toBytes());
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
-      final outTransaction = EncodedTransaction(Uint8List.fromList([0]));
+      final outTransaction = EncodedTransaction(
+        Uint8List.fromList([0]),
+        header: receivedTransaction.header,
+      );
       server.add(outTransaction.toBytes());
     }
 
