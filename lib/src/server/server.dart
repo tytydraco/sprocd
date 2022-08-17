@@ -111,6 +111,16 @@ class Server {
     );
 
     final transaction = EncodedTransaction.fromBytes(data);
+    final header = MetadataHeader.fromString(transaction.header);
+
+    info(
+      'server: received transaction from client: \n'
+      '=====================================\n'
+      'CLIENT: ${client.remoteAddress.address}\n'
+      'DATE: ${header.initTime.toIso8601String()}\n'
+      'ID: ${header.id}\n'
+      '=====================================',
+    );
 
     // Make sure we did not end in an error.
     if (!_dataIsError(transaction.data)) {

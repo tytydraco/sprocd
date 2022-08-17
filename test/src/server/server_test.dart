@@ -8,6 +8,9 @@ import 'package:sprocd/src/server/server.dart';
 import 'package:test/test.dart';
 
 void main() {
+  /// How many clients to create for the multi-client test.
+  const multiClientCount = 10;
+
   group('Server', () {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
@@ -85,17 +88,7 @@ void main() {
 
       // Server will provide dummy client with bytes.
       final dummyClient = await Socket.connect('localhost', 5555);
-      final dummyClientData = await dummyClient.first;
-      final dummyClientTransaction =
-          EncodedTransaction.fromBytes(dummyClientData);
-
-      // Ensure the server sent the correct data.
-      final dummyInputWorkingFile =
-          File(join(serverInputDir.path, 'dummyInput.working'));
-      expect(
-        dummyClientTransaction.data,
-        await dummyInputWorkingFile.readAsBytes(),
-      );
+      await dummyClient.first;
 
       // Simulate processing, reply back with output bytes.
       final transaction = EncodedTransaction(
@@ -119,7 +112,7 @@ void main() {
       expect(await outputFile.readAsBytes(), [1, 2, 3, 4, 5]);
     });
 
-    test('Three inputs and three clients', () async {
+    test('Several inputs and clients', () async {
       final inputQ = InputQ(serverInputDir);
       final server = Server(
         port: 5555,
@@ -128,7 +121,7 @@ void main() {
       );
 
       // Create several input files.
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < multiClientCount; i++) {
         File(join(serverInputDir.path, 'dummyInput$i'))
           ..createSync()
           ..writeAsStringSync('hello world $i');
@@ -139,17 +132,7 @@ void main() {
       Future<void> createClients(int i) async {
         // Server will provide dummy client with bytes.
         final dummyClient = await Socket.connect('localhost', 5555);
-        final dummyClientData = await dummyClient.first;
-        final dummyClientTransaction =
-            EncodedTransaction.fromBytes(dummyClientData);
-
-        // Ensure the server sent the correct data.
-        final dummyInputWorkingFile =
-            File(join(serverInputDir.path, 'dummyInput$i.working'));
-        expect(
-          dummyClientTransaction.data,
-          await dummyInputWorkingFile.readAsBytes(),
-        );
+        await dummyClient.first;
 
         // Simulate processing, reply back with output bytes.
         final transaction = EncodedTransaction(
@@ -165,12 +148,12 @@ void main() {
       }
 
       // Create equally as many clients as there are input files.
-      await Future.wait<void>(List.generate(3, createClients));
+      await Future.wait<void>(List.generate(multiClientCount, createClients));
 
       await server.stop();
 
       // Ensure server received the new data.
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < multiClientCount; i++) {
         final outputFile = File(join(serverOutputDir.path, 'dummyInput$i.out'));
         expect(outputFile.existsSync(), true);
 
