@@ -28,13 +28,27 @@ class Server {
   /// Manager to keep track of transactions.
   final _transactionManager = TransactionManager();
 
+  /// The active server socket.
+  ServerSocket? _serverSocket;
+
   /// Setup and start the server socket.
   Future<void> start() async {
+    if (_serverSocket != null) throw StateError('Server has already started');
+
     debug('server: starting server');
-    final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
+    _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
 
     debug('server: starting listener');
-    serverSocket.listen(_handleConnection);
+    _serverSocket!.listen(_handleConnection);
+  }
+
+  /// Stop the server socket.
+  Future<void> stop() async {
+    if (_serverSocket == null) throw StateError('Server is already stopped');
+
+    debug('server: stopping server');
+    await _serverSocket!.close();
+    _serverSocket = null;
   }
 
   /// Return true if the data output signifies an error code.
