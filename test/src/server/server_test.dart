@@ -12,8 +12,7 @@ void main() {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-    final serverInputDir = Directory(join(tempDir.path, 'input'))
-      ..createSync();
+    final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();
 
@@ -65,9 +64,7 @@ void main() {
 
       // Nothing should have been written out.
       expect(
-        await serverOutputDir
-            .list()
-            .isEmpty,
+        await serverOutputDir.list().isEmpty,
         true,
       );
     });
@@ -90,11 +87,11 @@ void main() {
       final dummyClient = await Socket.connect('localhost', 5555);
       final dummyClientData = await dummyClient.first;
       final dummyClientTransaction =
-      EncodedTransaction.fromBytes(dummyClientData);
+          EncodedTransaction.fromBytes(dummyClientData);
 
       // Ensure the server sent the correct data.
       final dummyInputWorkingFile =
-      File(join(serverInputDir.path, 'dummyInput.working'));
+          File(join(serverInputDir.path, 'dummyInput.working'));
       expect(
         dummyClientTransaction.data,
         await dummyInputWorkingFile.readAsBytes(),
@@ -139,17 +136,16 @@ void main() {
 
       await server.start();
 
-      // Create equally as many clients as there are input files.
-      for (var i = 0; i < 3; i++) {
+      Future<void> createClients(int i) async {
         // Server will provide dummy client with bytes.
         final dummyClient = await Socket.connect('localhost', 5555);
         final dummyClientData = await dummyClient.first;
         final dummyClientTransaction =
-        EncodedTransaction.fromBytes(dummyClientData);
+            EncodedTransaction.fromBytes(dummyClientData);
 
         // Ensure the server sent the correct data.
         final dummyInputWorkingFile =
-        File(join(serverInputDir.path, 'dummyInput$i.working'));
+            File(join(serverInputDir.path, 'dummyInput$i.working'));
         expect(
           dummyClientTransaction.data,
           await dummyInputWorkingFile.readAsBytes(),
@@ -167,6 +163,9 @@ void main() {
         await dummyClient.flush();
         await dummyClient.close();
       }
+
+      // Create equally as many clients as there are input files.
+      await Future.wait<void>(List.generate(3, createClients));
 
       await server.stop();
 

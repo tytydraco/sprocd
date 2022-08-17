@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/model/encoded_transaction.dart';
+import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
-import 'package:sprocd/src/utils/transaction_manager.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
@@ -25,11 +25,14 @@ class Server {
   /// The directory housing the output files.
   final Directory outputDir;
 
-  /// Manager to keep track of transactions.
-  final _transactionManager = TransactionManager();
-
   /// The active server socket.
   ServerSocket? _serverSocket;
+
+  /// The server start time.
+  final _initTime = DateTime.now();
+
+  /// The latest ID to use for the next transaction header.
+  int _transactionId = 0;
 
   /// Setup and start the server socket.
   Future<void> start() async {
@@ -68,17 +71,23 @@ class Server {
       );
       await client.close();
     } else {
+      // Take an ID to use for this transaction, then increment it.
+      final transactionId = _transactionId++;
+
       info(
         'server: sending transaction to client: \n'
         '=====================================\n'
         'CLIENT: ${client.remoteAddress.address}\n'
-        'DATE: ${_transactionManager.initTime.toIso8601String()}\n'
-        'ID: ${_transactionManager.id}\n'
+        'DATE: ${_initTime.toIso8601String()}\n'
+        'ID: $transactionId\n'
         '=====================================',
       );
 
       final inFileBytes = await file.readAsBytes();
-      final transaction = _transactionManager.make(inFileBytes);
+
+      final header =
+          MetadataHeader(initTime: _initTime, id: transactionId).toString();
+      final transaction = EncodedTransaction(inFileBytes, header: header);
       client.add(transaction.toBytes());
       await client.flush();
     }
