@@ -27,6 +27,9 @@ class Client {
   /// be appended to the command.
   final String command;
 
+  /// After this long, the connection has failed.
+  static const connectTimeout = Duration(seconds: 10);
+
   /// The file to write input data to.
   static final inputFile = File(join(Directory.systemTemp.path, 'input'));
 
@@ -35,14 +38,14 @@ class Client {
     info('client: received ${data.length} bytes');
     final receivedTransaction = EncodedTransaction.fromBytes(data);
     final metadataHeader =
-        MetadataHeader.fromString(receivedTransaction.header);
+    MetadataHeader.fromString(receivedTransaction.header);
 
     info(
       'client: handling transaction for session: \n'
-      '=====================================\n'
-      'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
-      '=====================================',
+          '=====================================\n'
+          'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+          'ID: ${metadataHeader.id}\n'
+          '=====================================',
     );
 
     await inputFile.create();
@@ -74,15 +77,24 @@ class Client {
   /// Connect the socket to the server.
   Future<void> connect() async {
     info('client: connecting to server');
-    final server = await Socket.connect(host, port);
+    final server = await Socket.connect(
+      host,
+      port,
+      timeout: connectTimeout,
+    );
     info('client: connected');
 
     // Get the first chunk of data sent by the server. This should contain our
     // input file if we were given one.
-
-    //TODO(tytydraco): catch error if cancels early (error from .first), use single in server side
-    final data = await server.first;
-    await _handleData(server, data);
+    //
+    // Only take the first event. Store this first as a list so that we can
+    // perform multiple operations on the data without draining.
+    final data = await server.take(1).toList();
+    if (data.isNotEmpty) {
+      await _handleData(server, data.first);
+    } else {
+      info('client: nothing to process');
+    }
     info('client: disconnected');
   }
 
