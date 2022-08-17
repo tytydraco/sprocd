@@ -8,12 +8,12 @@ void main() {
   group('InputQ', () {
     final tempDir = Directory.systemTemp.createTempSync();
 
-    setUp(tempDir.createSync);
     tearDown(
       () => tempDir.listSync().forEach((element) {
         element.deleteSync(recursive: true);
       }),
     );
+    tearDownAll(() => tempDir.deleteSync(recursive: true));
 
     final inputQ = InputQ(tempDir);
 
