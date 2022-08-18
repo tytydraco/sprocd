@@ -34,6 +34,10 @@ class Server {
   /// The latest ID to use for the next transaction header.
   int _transactionId = 0;
 
+  /// Create a label for a client socket.
+  String _clientId(Socket client) =>
+      '${client.remoteAddress.address}:${client.remotePort}';
+
   /// Setup and start the server socket.
   Future<void> start() async {
     if (_serverSocket != null) throw StateError('Server has already started');
@@ -60,15 +64,14 @@ class Server {
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
   Future<File?> _serveInput(Socket client) async {
+    final clientId = _clientId(client);
+
     await inputQ.scan();
     final file = await inputQ.pop();
 
     // If there is nothing to do, disconnect them.
     if (file == null) {
-      debug(
-        'server: nothing to serve, closing: '
-        '${client.remoteAddress.address}',
-      );
+      debug('server: nothing to serve, closing: $clientId');
       await client.close();
     } else {
       // Take an ID to use for this transaction, then increment it.
@@ -77,7 +80,7 @@ class Server {
       info(
         'server: sending transaction to client: \n'
         '=====================================\n'
-        'CLIENT: ${client.remoteAddress.address}\n'
+        'CLIENT: $clientId\n'
         'INIT-DATE: ${_initTime.toIso8601String()}\n'
         'ID: $transactionId\n'
         '=====================================',
@@ -97,7 +100,9 @@ class Server {
 
   /// Handle an incoming connection from a client.
   Future<void> _handleConnection(Socket client) async {
-    debug('server: client connected: ${client.remoteAddress.address}');
+    final clientId = _clientId(client);
+
+    debug('server: client connected: $clientId');
 
     // Serve input file to this client if one exists.
     final workingFile = await _serveInput(client);
@@ -105,10 +110,7 @@ class Server {
 
     // Write out the output file to the disk.
     final data = await client.first;
-    info(
-      'server: received ${data.length} bytes from client: '
-      '${client.remoteAddress.address}',
-    );
+    info('server: received ${data.length} bytes from client: $clientId');
 
     final transaction = EncodedTransaction.fromBytes(data);
 
@@ -119,7 +121,7 @@ class Server {
       info(
         'server: received transaction from client: \n'
         '=====================================\n'
-        'CLIENT: ${client.remoteAddress.address}\n'
+        'CLIENT: $clientId\n'
         'INIT-DATE: ${header.initTime.toIso8601String()}\n'
         'ID: ${header.id}\n'
         '=====================================',
@@ -134,10 +136,7 @@ class Server {
       debug('server: deleting original at ${workingFile.path}');
       await workingFile.delete();
     } else {
-      warn(
-        'server: client processing failed: '
-        '${client.remoteAddress.address}',
-      );
+      warn('server: client processing failed: $clientId');
     }
 
     // We are done, disconnect the client.
