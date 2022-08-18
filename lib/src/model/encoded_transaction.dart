@@ -11,7 +11,7 @@ class EncodedTransaction extends Transaction {
 
   /// Creates a new [EncodedTransaction] from a list of [bytes].
   factory EncodedTransaction.fromBytes(List<int> bytes) {
-    final transaction = Transaction.fromBytes(decode(bytes));
+    final transaction = Transaction.fromBytes(decodeBytes(bytes));
 
     return EncodedTransaction(
       transaction.data,
@@ -21,6 +21,6 @@ class EncodedTransaction extends Transaction {
 
   @override
   List<int> toBytes() {
-    return encode(super.toBytes());
+    return encodeBytes(super.toBytes());
   }
 }
