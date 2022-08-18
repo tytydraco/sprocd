@@ -35,14 +35,14 @@ class Client {
     info('client: received ${data.length} bytes');
     final receivedTransaction = EncodedTransaction.fromBytes(data);
     final metadataHeader =
-    MetadataHeader.fromString(receivedTransaction.header);
+        MetadataHeader.fromString(receivedTransaction.header);
 
     info(
       'client: handling transaction for session: \n'
-          '=====================================\n'
-          'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-          'ID: ${metadataHeader.id}\n'
-          '=====================================',
+      '=====================================\n'
+      'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'ID: ${metadataHeader.id}\n'
+      '=====================================',
     );
 
     final tempDir = await Directory.systemTemp.createTemp();
@@ -76,7 +76,7 @@ class Client {
     await server.close();
 
     // Delete input file after we processed it.
-    await inputFile.delete();
+    await tempDir.delete(recursive: true);
   }
 
   /// Connect the socket to the server. Returns false if the server didn't have
