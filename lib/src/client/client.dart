@@ -34,7 +34,14 @@ class Client {
   /// data, and false otherwise.
   Future<bool> _handleConnection(Socket server) async {
     final splitStream = StreamSplitter(server);
-    final header = await getHeader(splitStream.split()) ?? '';
+
+    // TODO(tytydraco): figure out if error or not without reading entire data
+    if (await splitStream.split().isEmpty) {
+      info('client: nothing to process');
+      return false;
+    }
+
+    final header = await getHeader(splitStream.split().take(1)) ?? '';
     final metadataHeader = MetadataHeader.fromString(header);
 
     info(
@@ -44,13 +51,6 @@ class Client {
       'ID: ${metadataHeader.id}\n'
       '=====================================',
     );
-
-    // TODO(tytydraco): figure out if error or not without reading entire data
-    final data = await splitStream.split().skip(1).take(1).single;
-    if (data.isEmpty) {
-      info('client: nothing to process');
-      return false;
-    }
 
     final tempDir = await Directory.systemTemp.createTemp();
     final inputFile = File(join(tempDir.path, 'input'));

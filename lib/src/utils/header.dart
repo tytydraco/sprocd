@@ -10,7 +10,7 @@ const maxHeaderLength = 32;
 /// Get a header from a byte stream that contains one. This will consume the
 /// stream. It may be desirable to use a [StreamSplitter].
 Future<String?> getHeader(Stream<List<int>> byteStream) async {
-  final encodedHeader = await byteStream.first;
+  final encodedHeader = (await byteStream.first).take(maxHeaderLength).toList();
 
   // Decode the header up to the last non-null character.
   final headerLastNonNullIdx = encodedHeader.lastIndexWhere((e) => e != 0);
@@ -48,10 +48,10 @@ Stream<List<int>> addHeader(Stream<List<int>> byteStream, String header) {
     );
   }
 
-  final combinedStream = StreamGroup.merge([
-    Stream.fromIterable([headerBytes]),
+  final group = StreamGroup.merge([
+    Stream.value(headerBytes),
     byteStream,
   ]);
 
-  return combinedStream;
+  return group;
 }

@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
 import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:sprocd/src/server/server.dart';
+import 'package:sprocd/src/utils/header.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -91,14 +91,11 @@ void main() {
       await dummyClient.first;
 
       // Simulate processing, reply back with output bytes.
-      final transaction = EncodedTransaction(
-        [1, 2, 3, 4, 5],
-        header: MetadataHeader(
-          id: 0,
-          initTime: DateTime.now(),
-        ).toString(),
-      );
-      dummyClient.add(transaction.toBytes());
+      final header = MetadataHeader(initTime: DateTime.now(), id: 0);
+      final headedStream =
+          addHeader(Stream.value([1, 2, 3, 4, 5]), header.toString());
+
+      await dummyClient.addStream(headedStream);
       await dummyClient.flush();
       await dummyClient.close();
 
@@ -135,14 +132,11 @@ void main() {
         await dummyClient.first;
 
         // Simulate processing, reply back with output bytes.
-        final transaction = EncodedTransaction(
-          [1, 2, 3, 4, 5, i],
-          header: MetadataHeader(
-            id: i,
-            initTime: DateTime.now(),
-          ).toString(),
-        );
-        dummyClient.add(transaction.toBytes());
+        final header = MetadataHeader(initTime: DateTime.now(), id: i);
+        final headedStream =
+            addHeader(Stream.value([1, 2, 3, 4, 5, i]), header.toString());
+
+        await dummyClient.addStream(headedStream);
         await dummyClient.flush();
         await dummyClient.close();
       }

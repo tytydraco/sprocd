@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/client.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
 import 'package:sprocd/src/model/metadata_header.dart';
+import 'package:sprocd/src/utils/header.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -52,11 +52,11 @@ void main() {
         command: 'bash ${exampleScript.path}',
       );
       dummyServer.listen((client) async {
-        final transaction = EncodedTransaction(
-          [1, 2, 3, 4, 5],
-          header: MetadataHeader(id: 0, initTime: DateTime.now()).toString(),
-        );
-        client.add(transaction.toBytes());
+        final header = MetadataHeader(initTime: DateTime.now(), id: 0);
+        final headedStream =
+            addHeader(Stream.value([1, 2, 3, 4, 5]), header.toString());
+
+        await client.addStream(headedStream);
         await client.flush();
         await client.close();
       });
@@ -76,11 +76,11 @@ void main() {
         command: 'exit 1; bash ${exampleScript.path}',
       );
       dummyServer.listen((client) async {
-        final transaction = EncodedTransaction(
-          [1, 2, 3, 4, 5],
-          header: MetadataHeader(id: 0, initTime: DateTime.now()).toString(),
-        );
-        client.add(transaction.toBytes());
+        final header = MetadataHeader(initTime: DateTime.now(), id: 0);
+        final headedStream =
+            addHeader(Stream.value([1, 2, 3, 4, 5]), header.toString());
+
+        await client.addStream(headedStream);
         await client.flush();
         await client.close();
       });
