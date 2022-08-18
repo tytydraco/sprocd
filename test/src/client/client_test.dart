@@ -6,6 +6,7 @@ import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/utils/header.dart';
 import 'package:test/test.dart';
 
+// TODO(tytydraco): Add back encoding and decoding
 void main() {
   group('Client', () {
     final tempDir = Directory.systemTemp.createTempSync();
