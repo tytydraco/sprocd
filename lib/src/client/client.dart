@@ -36,7 +36,9 @@ class Client {
     final splitStream = StreamSplitter(server);
 
     // TODO(tytydraco): figure out if error or not without reading entire data
-    if (await splitStream.split().isEmpty) {
+    if (await splitStream
+        .split()
+        .isEmpty) {
       info('client: nothing to process');
       return false;
     }
@@ -46,10 +48,10 @@ class Client {
 
     info(
       'client: handling transaction for session: \n'
-      '=====================================\n'
-      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
-      '=====================================',
+          '=====================================\n'
+          'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+          'ID: ${metadataHeader.id}\n'
+          '=====================================',
     );
 
     final tempDir = await Directory.systemTemp.createTemp();
@@ -57,6 +59,8 @@ class Client {
     await inputFile.create();
 
     // Skip the header portion, write out the next chunk of data.
+
+    // TODO(tytydraco): uhh make sure this is the actual data. It might need .skip(32)
     final dataStream = splitStream.split().skip(1).take(1);
     await inputFile.openWrite().addStream(dataStream);
     debug('client: wrote out to ${inputFile.path}');
