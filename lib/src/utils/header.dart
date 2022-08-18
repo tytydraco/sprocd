@@ -7,11 +7,10 @@ import 'package:stdlog/stdlog.dart';
 /// The fixed length to reserve for the header.
 const maxHeaderLength = 32;
 
-/// Get a header from a byte stream that contains one.
+/// Get a header from a byte stream that contains one. This will consume the
+/// stream. It may be desirable to use a [StreamSplitter].
 Future<String?> getHeader(Stream<List<int>> byteStream) async {
-  final splitStream = StreamSplitter(byteStream);
-  final headerStream = splitStream.split().take(32);
-  final encodedHeader = await headerStream.single;
+  final encodedHeader = await byteStream.first;
 
   // Decode the header up to the last non-null character.
   final headerLastNonNullIdx = encodedHeader.lastIndexWhere((e) => e != 0);
@@ -24,12 +23,10 @@ Future<String?> getHeader(Stream<List<int>> byteStream) async {
   return null;
 }
 
-/// Returns a new stream with a header prepended to a byte stream.
+/// Returns a new stream with a header event prepended to a byte stream.
 Stream<List<int>> addHeader(Stream<List<int>> byteStream, String header) {
-  final controller = StreamController<List<int>>();
-
   // Fill header area with NULLs to start.
-  final headerBytes = List.filled(maxHeaderLength, 0);
+  final headerBytes = List.filled(maxHeaderLength, 0, growable: true);
 
   // Add header info if needed.
   if (header.isNotEmpty) {
@@ -51,9 +48,10 @@ Stream<List<int>> addHeader(Stream<List<int>> byteStream, String header) {
     );
   }
 
-  controller
-    ..add(headerBytes)
-    ..addStream(byteStream);
+  final combinedStream = StreamGroup.merge([
+    Stream.fromIterable([headerBytes]),
+    byteStream,
+  ]);
 
-  return controller.stream;
+  return combinedStream;
 }
