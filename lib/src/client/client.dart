@@ -3,8 +3,6 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -33,22 +31,23 @@ class Client {
   /// Handle incoming data from the server.
   Future<void> _handleData(Socket server, Uint8List data) async {
     info('client: received ${data.length} bytes');
-    final receivedTransaction = EncodedTransaction.fromBytes(data);
-    final metadataHeader =
-        MetadataHeader.fromString(receivedTransaction.header);
+    //final receivedTransaction = EncodedTransaction.fromBytes(data);
+    //final metadataHeader =
+    //    MetadataHeader.fromString(receivedTransaction.header);
 
     info(
       'client: handling transaction for session: \n'
       '=====================================\n'
-      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
+      //  'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      //  'ID: ${metadataHeader.id}\n'
       '=====================================',
     );
 
     final tempDir = await Directory.systemTemp.createTemp();
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
-    await inputFile.writeAsBytes(receivedTransaction.data);
+    //await inputFile.writeAsBytes(receivedTransaction.data);
+    await inputFile.writeAsBytes(data);
     debug('client: wrote out to ${inputFile.path}');
 
     // Process the input file.
@@ -57,19 +56,21 @@ class Client {
       // Processing succeeded.
       info('client: responding to server');
       final outFileBytes = await outFile.readAsBytes();
-      final outTransaction = EncodedTransaction(
-        outFileBytes,
-        header: receivedTransaction.header,
-      );
-      server.add(outTransaction.toBytes());
+      //final outTransaction = EncodedTransaction(
+      //  outFileBytes,
+      //  header: receivedTransaction.header,
+      //);
+      //server.add(outTransaction.toBytes());
+      server.add(outFileBytes);
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
-      final outTransaction = EncodedTransaction(
-        Uint8List.fromList([0]),
-        header: receivedTransaction.header,
-      );
-      server.add(outTransaction.toBytes());
+      //final outTransaction = EncodedTransaction(
+      //  Uint8List.fromList([0]),
+      //  header: receivedTransaction.header,
+      //);
+      //server.add(outTransaction.toBytes());
+      server.add([0]);
     }
 
     await server.flush();

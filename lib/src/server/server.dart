@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:stdlog/stdlog.dart';
 
@@ -88,10 +86,11 @@ class Server {
 
       final inFileBytes = await file.readAsBytes();
 
-      final header =
-          MetadataHeader(initTime: _initTime, id: transactionId).toString();
-      final transaction = EncodedTransaction(inFileBytes, header: header);
-      client.add(transaction.toBytes());
+      //final header =
+      //    MetadataHeader(initTime: _initTime, id: transactionId).toString();
+      //final transaction = EncodedTransaction(inFileBytes, header: header);
+      //client.add(transaction.toBytes());
+      client.add(inFileBytes);
       await client.flush();
     }
 
@@ -114,18 +113,19 @@ class Server {
     final data = await client.first;
     info('server: received ${data.length} bytes from client: $clientId');
 
-    final transaction = EncodedTransaction.fromBytes(data);
+    //final transaction = EncodedTransaction.fromBytes(data);
 
     // Make sure we did not end in an error.
-    if (!_dataIsError(transaction.data)) {
-      final header = MetadataHeader.fromString(transaction.header);
+    //if (!_dataIsError(transaction.data)) {
+    if (!_dataIsError(data)) {
+      //final header = MetadataHeader.fromString(transaction.header);
 
       info(
         'server: received transaction from client: \n'
         '=====================================\n'
         'CLIENT: $clientId\n'
-        'INIT-DATE: ${header.initTime.toIso8601String()}\n'
-        'ID: ${header.id}\n'
+        //'INIT-DATE: ${header.initTime.toIso8601String()}\n'
+        //'ID: ${header.id}\n'
         '=====================================',
       );
 
@@ -134,7 +134,8 @@ class Server {
       final outPath = join(outputDir.path, outName);
 
       debug('server: writing out to $outPath');
-      await File(outPath).writeAsBytes(transaction.data);
+      //await File(outPath).writeAsBytes(transaction.data);
+      await File(outPath).writeAsBytes(data);
       debug('server: deleting original at ${workingFile.path}');
       await workingFile.delete();
     } else {
