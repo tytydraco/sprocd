@@ -112,37 +112,37 @@ class Server {
     if (workingFile == null) return;
 
     // Write out the output file to the disk.
-    final data = await client.first;
-    info('server: received ${data.length} bytes from client: $clientId');
+    //final data = await client.first;
+    //info('server: received ${data.length} bytes from client: $clientId');
 
     //final transaction = EncodedTransaction.fromBytes(data);
 
     // Make sure we did not end in an error.
     //if (!_dataIsError(transaction.data)) {
-    if (!_dataIsError(data)) {
-      //final header = MetadataHeader.fromString(transaction.header);
+    //if (!_dataIsError(data)) {
+    //final header = MetadataHeader.fromString(transaction.header);
 
-      info(
-        'server: received transaction from client: \n'
-        '=====================================\n'
-        'CLIENT: $clientId\n'
-        //'INIT-DATE: ${header.initTime.toIso8601String()}\n'
-        //'ID: ${header.id}\n'
-        '=====================================',
-      );
+    info(
+      'server: received transaction from client: \n'
+      '=====================================\n'
+      'CLIENT: $clientId\n'
+      //'INIT-DATE: ${header.initTime.toIso8601String()}\n'
+      //'ID: ${header.id}\n'
+      '=====================================',
+    );
 
-      final outName =
-          basename(workingFile.path).replaceFirst('.working', '.out');
-      final outPath = join(outputDir.path, outName);
+    final outName = basename(workingFile.path).replaceFirst('.working', '.out');
+    final outPath = join(outputDir.path, outName);
 
-      debug('server: writing out to $outPath');
-      //await File(outPath).writeAsBytes(transaction.data);
-      await File(outPath).writeAsBytes(data);
-      debug('server: deleting original at ${workingFile.path}');
-      await workingFile.delete();
-    } else {
-      warn('server: client processing failed: $clientId');
-    }
+    debug('server: writing out to $outPath');
+    //await File(outPath).writeAsBytes(transaction.data);
+    //await File(outPath).writeAsBytes(data);
+    await File(outPath).openWrite().addStream(client);
+    debug('server: deleting original at ${workingFile.path}');
+    await workingFile.delete();
+    //} else {
+    //  warn('server: client processing failed: $clientId');
+    //}
 
     // We are done, disconnect the client.
     await client.close();
