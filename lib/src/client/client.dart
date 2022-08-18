@@ -71,7 +71,8 @@ class Client {
       //);
       //server.add(outTransaction.toBytes());
       //server.add(outFileBytes);
-      await server.addStream(outFile.openRead());
+      final headedOutFileStream = addHeader(outFile.openRead(), header);
+      await server.addStream(headedOutFileStream);
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
@@ -80,7 +81,11 @@ class Client {
       //  header: receivedTransaction.header,
       //);
       //server.add(outTransaction.toBytes());
-      server.add([0]);
+      final headedOutStream = addHeader(
+        Stream.value([0]),
+        header,
+      );
+      await server.addStream(headedOutStream);
     }
 
     await server.flush();

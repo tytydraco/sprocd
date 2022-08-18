@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
@@ -124,27 +125,37 @@ class Server {
     //if (!_dataIsError(data)) {
     //final header = MetadataHeader.fromString(transaction.header);
 
+    final splitStream = StreamSplitter(client);
+
+    final header = await getHeader(splitStream.split()) ?? '';
+    final metadataHeader = MetadataHeader.fromString(header);
+
     info(
       'server: received transaction from client: \n'
       '=====================================\n'
       'CLIENT: $clientId\n'
-      //'INIT-DATE: ${header.initTime.toIso8601String()}\n'
-      //'ID: ${header.id}\n'
+      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'ID: ${metadataHeader.id}\n'
       '=====================================',
     );
 
-    final outName = basename(workingFile.path).replaceFirst('.working', '.out');
-    final outPath = join(outputDir.path, outName);
+    final data = await splitStream.split().skip(1).take(1).single;
+    final hadError = data.length == 1 && data.first == 0;
+    if (!hadError) {
+      final outName =
+          basename(workingFile.path).replaceFirst('.working', '.out');
+      final outPath = join(outputDir.path, outName);
 
-    debug('server: writing out to $outPath');
-    //await File(outPath).writeAsBytes(transaction.data);
-    //await File(outPath).writeAsBytes(data);
-    await File(outPath).openWrite().addStream(client);
-    debug('server: deleting original at ${workingFile.path}');
-    await workingFile.delete();
-    //} else {
-    //  warn('server: client processing failed: $clientId');
-    //}
+      debug('server: writing out to $outPath');
+      //await File(outPath).writeAsBytes(transaction.data);
+      //await File(outPath).writeAsBytes(data);
+      final dataStream = splitStream.split().skip(1).take(1);
+      await File(outPath).openWrite().addStream(dataStream);
+      debug('server: deleting original at ${workingFile.path}');
+      await workingFile.delete();
+    } else {
+      warn('server: client processing failed: $clientId');
+    }
 
     // We are done, disconnect the client.
     await client.close();
