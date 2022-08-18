@@ -30,13 +30,9 @@ class Client {
   /// After this long, the connection has failed.
   static const connectTimeout = Duration(seconds: 10);
 
-  /// Handle incoming data from the server.
-  Future<void> _handleData(Socket server) async {
-    //info('client: received ${data.length} bytes');
-    //final receivedTransaction = EncodedTransaction.fromBytes(data);
-    //final metadataHeader =
-    //    MetadataHeader.fromString(receivedTransaction.header);
-
+  /// Handle incoming connections from the server. Returns true if we processed
+  /// data, and false otherwise.
+  Future<bool> _handleConnection(Socket server) async {
     final splitStream = StreamSplitter(server);
     final header = await getHeader(splitStream.split()) ?? '';
     final metadataHeader = MetadataHeader.fromString(header);
@@ -49,12 +45,18 @@ class Client {
       '=====================================',
     );
 
+    // TODO(tytydraco): figure out if error or not without reading entire data
+    final data = await splitStream.split().skip(1).take(1).single;
+    if (data.isEmpty) {
+      info('client: nothing to process');
+      return false;
+    }
+
     final tempDir = await Directory.systemTemp.createTemp();
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
-    //await inputFile.writeAsBytes(receivedTransaction.data);
 
-    // Skip the header portion, take the next chunk of data.
+    // Skip the header portion, write out the next chunk of data.
     final dataStream = splitStream.split().skip(1).take(1);
     await inputFile.openWrite().addStream(dataStream);
     debug('client: wrote out to ${inputFile.path}');
@@ -62,29 +64,12 @@ class Client {
     // Process the input file.
     final outFile = await Blackbox(command).process(inputFile);
     if (outFile != null) {
-      // Processing succeeded.
       info('client: responding to server');
-      //final outFileBytes = await outFile.readAsBytes();
-      //final outTransaction = EncodedTransaction(
-      //  outFileBytes,
-      //  header: receivedTransaction.header,
-      //);
-      //server.add(outTransaction.toBytes());
-      //server.add(outFileBytes);
       final headedOutFileStream = addHeader(outFile.openRead(), header);
       await server.addStream(headedOutFileStream);
     } else {
-      // Processing failed.
       info('client: informing server of processing failure');
-      //final outTransaction = EncodedTransaction(
-      //  Uint8List.fromList([0]),
-      //  header: receivedTransaction.header,
-      //);
-      //server.add(outTransaction.toBytes());
-      final headedOutStream = addHeader(
-        Stream.value([0]),
-        header,
-      );
+      final headedOutStream = addHeader(Stream.value([0]), header);
       await server.addStream(headedOutStream);
     }
 
@@ -93,6 +78,9 @@ class Client {
 
     // Delete input file after we processed it.
     await tempDir.delete(recursive: true);
+
+    info('client: processed successfully');
+    return true;
   }
 
   /// Connect the socket to the server. Returns false if the server didn't have
@@ -108,20 +96,7 @@ class Client {
 
     // Get the first chunk of data sent by the server. This should contain our
     // input file if we were given one.
-    //
-    // Only take the first event. Store this first as a list so that we can
-    // perform multiple operations on the data without draining.
-    //final data = await server.take(1).toList();
-    //if (data.isNotEmpty) {
-    //  await _handleData(server, data.first);
-    //  info('client: processed successfully');
-    //  return true;
-    //} else {
-    //  info('client: nothing to process');
-    //  return false;
-    //}
-    await _handleData(server);
-    return true;
+    return _handleConnection(server);
   }
 
   /// Connect the socket to the server. If the client gets disconnected, wait

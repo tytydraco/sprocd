@@ -59,9 +59,6 @@ class Server {
     _serverSocket = null;
   }
 
-  /// Return true if the data output signifies an error code.
-  bool _dataIsError(List<int> data) => data.length == 1 && data.first == 0;
-
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
   Future<File?> _serveInput(Socket client) async {
@@ -87,13 +84,8 @@ class Server {
         '=====================================',
       );
 
-      //final inFileBytes = await file.readAsBytes();
-
       final header = MetadataHeader(initTime: _initTime, id: transactionId);
       final headedFileStream = addHeader(file.openRead(), header.toString());
-      //final transaction = EncodedTransaction(inFileBytes, header: header);
-      //client.add(transaction.toBytes());
-      //client.add(inFileBytes);
 
       await client.addStream(headedFileStream);
       await client.flush();
@@ -114,19 +106,7 @@ class Server {
     final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
-    // Write out the output file to the disk.
-    //final data = await client.first;
-    //info('server: received ${data.length} bytes from client: $clientId');
-
-    //final transaction = EncodedTransaction.fromBytes(data);
-
-    // Make sure we did not end in an error.
-    //if (!_dataIsError(transaction.data)) {
-    //if (!_dataIsError(data)) {
-    //final header = MetadataHeader.fromString(transaction.header);
-
     final splitStream = StreamSplitter(client);
-
     final header = await getHeader(splitStream.split()) ?? '';
     final metadataHeader = MetadataHeader.fromString(header);
 
@@ -139,6 +119,8 @@ class Server {
       '=====================================',
     );
 
+    // Make sure we did not end in an error.
+    // TODO(tytydraco): figure out if error or not without reading entire data
     final data = await splitStream.split().skip(1).take(1).single;
     final hadError = data.length == 1 && data.first == 0;
     if (!hadError) {
@@ -146,11 +128,11 @@ class Server {
           basename(workingFile.path).replaceFirst('.working', '.out');
       final outPath = join(outputDir.path, outName);
 
+      // Write out the output file to the disk.
       debug('server: writing out to $outPath');
-      //await File(outPath).writeAsBytes(transaction.data);
-      //await File(outPath).writeAsBytes(data);
       final dataStream = splitStream.split().skip(1).take(1);
       await File(outPath).openWrite().addStream(dataStream);
+
       debug('server: deleting original at ${workingFile.path}');
       await workingFile.delete();
     } else {
