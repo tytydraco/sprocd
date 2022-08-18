@@ -79,17 +79,17 @@ class Server {
 
       info(
         'server: sending transaction to client: \n'
-            '=====================================\n'
-            'CLIENT: $clientId\n'
-            'INIT-DATE: ${_initTime.toIso8601String()}\n'
-            'ID: $transactionId\n'
-            '=====================================',
+        '=====================================\n'
+        'CLIENT: $clientId\n'
+        'INIT-DATE: ${_initTime.toIso8601String()}\n'
+        'ID: $transactionId\n'
+        '=====================================',
       );
 
       final inFileBytes = await file.readAsBytes();
 
       final header =
-      MetadataHeader(initTime: _initTime, id: transactionId).toString();
+          MetadataHeader(initTime: _initTime, id: transactionId).toString();
       final transaction = EncodedTransaction(inFileBytes, header: header);
       client.add(transaction.toBytes());
       await client.flush();
@@ -122,15 +122,15 @@ class Server {
 
       info(
         'server: received transaction from client: \n'
-            '=====================================\n'
-            'CLIENT: $clientId\n'
-            'INIT-DATE: ${header.initTime.toIso8601String()}\n'
-            'ID: ${header.id}\n'
-            '=====================================',
+        '=====================================\n'
+        'CLIENT: $clientId\n'
+        'INIT-DATE: ${header.initTime.toIso8601String()}\n'
+        'ID: ${header.id}\n'
+        '=====================================',
       );
 
       final outName =
-      basename(workingFile.path).replaceFirst('.working', '.out');
+          basename(workingFile.path).replaceFirst('.working', '.out');
       final outPath = join(outputDir.path, outName);
 
       debug('server: writing out to $outPath');
@@ -146,6 +146,6 @@ class Server {
 
     final timeEnd = DateTime.now();
     final duration = timeEnd.difference(timeStart);
-    info('server: connection duration: $duration');
+    info('server: connection duration: $duration for client: $clientId');
   }
 }
