@@ -78,7 +78,7 @@ class Server {
         'server: sending transaction to client: \n'
         '=====================================\n'
         'CLIENT: ${client.remoteAddress.address}\n'
-        'DATE: ${_initTime.toIso8601String()}\n'
+        'INIT-DATE: ${_initTime.toIso8601String()}\n'
         'ID: $transactionId\n'
         '=====================================',
       );
@@ -120,7 +120,7 @@ class Server {
         'server: received transaction from client: \n'
         '=====================================\n'
         'CLIENT: ${client.remoteAddress.address}\n'
-        'DATE: ${header.initTime.toIso8601String()}\n'
+        'INIT-DATE: ${header.initTime.toIso8601String()}\n'
         'ID: ${header.id}\n'
         '=====================================',
       );

@@ -40,7 +40,7 @@ class Client {
     info(
       'client: handling transaction for session: \n'
       '=====================================\n'
-      'DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
       'ID: ${metadataHeader.id}\n'
       '=====================================',
     );
