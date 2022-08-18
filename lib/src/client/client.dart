@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
@@ -29,8 +28,8 @@ class Client {
   static const connectTimeout = Duration(seconds: 10);
 
   /// Handle incoming data from the server.
-  Future<void> _handleData(Socket server, Uint8List data) async {
-    info('client: received ${data.length} bytes');
+  Future<void> _handleData(Socket server) async {
+    //info('client: received ${data.length} bytes');
     //final receivedTransaction = EncodedTransaction.fromBytes(data);
     //final metadataHeader =
     //    MetadataHeader.fromString(receivedTransaction.header);
@@ -47,7 +46,7 @@ class Client {
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
     //await inputFile.writeAsBytes(receivedTransaction.data);
-    await inputFile.writeAsBytes(data);
+    await inputFile.openWrite().addStream(server.take(1));
     debug('client: wrote out to ${inputFile.path}');
 
     // Process the input file.
@@ -55,13 +54,14 @@ class Client {
     if (outFile != null) {
       // Processing succeeded.
       info('client: responding to server');
-      final outFileBytes = await outFile.readAsBytes();
+      //final outFileBytes = await outFile.readAsBytes();
       //final outTransaction = EncodedTransaction(
       //  outFileBytes,
       //  header: receivedTransaction.header,
       //);
       //server.add(outTransaction.toBytes());
-      server.add(outFileBytes);
+      //server.add(outFileBytes);
+      await server.addStream(outFile.openRead());
     } else {
       // Processing failed.
       info('client: informing server of processing failure');
@@ -96,15 +96,17 @@ class Client {
     //
     // Only take the first event. Store this first as a list so that we can
     // perform multiple operations on the data without draining.
-    final data = await server.take(1).toList();
-    if (data.isNotEmpty) {
-      await _handleData(server, data.first);
-      info('client: processed successfully');
-      return true;
-    } else {
-      info('client: nothing to process');
-      return false;
-    }
+    //final data = await server.take(1).toList();
+    //if (data.isNotEmpty) {
+    //  await _handleData(server, data.first);
+    //  info('client: processed successfully');
+    //  return true;
+    //} else {
+    //  info('client: nothing to process');
+    //  return false;
+    //}
+    await _handleData(server);
+    return true;
   }
 
   /// Connect the socket to the server. If the client gets disconnected, wait
