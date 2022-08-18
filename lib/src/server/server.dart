@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
+import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
+import 'package:sprocd/src/utils/header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
@@ -86,13 +88,13 @@ class Server {
 
       //final inFileBytes = await file.readAsBytes();
 
-      //final header =
-      //    MetadataHeader(initTime: _initTime, id: transactionId).toString();
+      final header = MetadataHeader(initTime: _initTime, id: transactionId);
+      final headedFileStream = addHeader(file.openRead(), header.toString());
       //final transaction = EncodedTransaction(inFileBytes, header: header);
       //client.add(transaction.toBytes());
       //client.add(inFileBytes);
 
-      await client.addStream(file.openRead());
+      await client.addStream(headedFileStream);
       await client.flush();
     }
 

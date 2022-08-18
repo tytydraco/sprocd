@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
+import 'package:sprocd/src/model/metadata_header.dart';
+import 'package:sprocd/src/utils/header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -34,11 +37,15 @@ class Client {
     //final metadataHeader =
     //    MetadataHeader.fromString(receivedTransaction.header);
 
+    final splitStream = StreamSplitter(server);
+    final header = await getHeader(splitStream.split()) ?? '';
+    final metadataHeader = MetadataHeader.fromString(header);
+
     info(
       'client: handling transaction for session: \n'
       '=====================================\n'
-      //  'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      //  'ID: ${metadataHeader.id}\n'
+      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'ID: ${metadataHeader.id}\n'
       '=====================================',
     );
 
@@ -46,7 +53,10 @@ class Client {
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
     //await inputFile.writeAsBytes(receivedTransaction.data);
-    await inputFile.openWrite().addStream(server.take(1));
+
+    // Skip the header portion, take the next chunk of data.
+    final dataStream = splitStream.split().skip(1).take(1);
+    await inputFile.openWrite().addStream(dataStream);
     debug('client: wrote out to ${inputFile.path}');
 
     // Process the input file.
