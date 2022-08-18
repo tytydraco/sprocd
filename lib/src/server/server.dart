@@ -84,13 +84,15 @@ class Server {
         '=====================================',
       );
 
-      final inFileBytes = await file.readAsBytes();
+      //final inFileBytes = await file.readAsBytes();
 
       //final header =
       //    MetadataHeader(initTime: _initTime, id: transactionId).toString();
       //final transaction = EncodedTransaction(inFileBytes, header: header);
       //client.add(transaction.toBytes());
-      client.add(inFileBytes);
+      //client.add(inFileBytes);
+
+      await client.addStream(file.openRead());
       await client.flush();
     }
 
