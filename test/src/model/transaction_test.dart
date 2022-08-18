@@ -1,4 +1,4 @@
-import 'package:sprocd/src/model/transaction.dart';
+import 'package:sprocd/src/utils/header.dart';
 import 'package:test/test.dart';
 
 void main() {
