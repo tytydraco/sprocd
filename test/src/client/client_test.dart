@@ -23,7 +23,7 @@ void main() {
 
     test('Server is dead', () async {
       final client = Client(host: 'doesnotexist', port: 9999, command: 'echo');
-      expect(client.connect, throwsA(isA<SocketException>()));
+      expect(await client.connect(), false);
     });
 
     test('Server has nothing to serve', () async {

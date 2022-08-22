@@ -52,7 +52,14 @@ class Client {
     final outFile = await Blackbox(command).process(inputFile);
     if (outFile != null) {
       info('client: responding to server');
-      await server.addStream(encode(outFile.openRead()));
+      try {
+        await server.addStream(encode(outFile.openRead()));
+      } catch (e) {
+        error('client: failed to respond to server');
+        stderr.writeln(e.toString());
+        await tempDir.delete(recursive: true);
+        return false;
+      }
     }
 
     await server.flush();
@@ -67,11 +74,17 @@ class Client {
   /// any data for us, and true if it did.
   Future<bool> connect() async {
     info('client: connecting to server');
-    final server = await Socket.connect(
-      host,
-      port,
-      timeout: connectTimeout,
-    );
+    final Socket server;
+    try {
+      server = await Socket.connect(
+        host,
+        port,
+        timeout: connectTimeout,
+      );
+    } catch (e) {
+      error('client: failed to connect to server');
+      return false;
+    }
     info('client: connected');
 
     return _handleConnection(server);

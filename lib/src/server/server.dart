@@ -82,14 +82,18 @@ class Server {
         '=====================================',
       );
 
-      await client.addStream(encode(file.openRead()));
-      await client.flush();
-      await client.close();
-
-      info('server: finished sending data to client: $clientId');
+      try {
+        await client.addStream(encode(file.openRead()));
+        await client.flush();
+        await client.close();
+        info('server: finished sending data to client: $clientId');
+        return file;
+      } catch (e) {
+        error('server: failed to send data to client: $clientId');
+        stderr.writeln(e.toString());
+        return null;
+      }
     }
-
-    return file;
   }
 
   /// Handle an incoming connection from a client.
