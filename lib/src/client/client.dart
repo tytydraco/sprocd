@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
-import 'package:sprocd/src/utils/header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -41,25 +39,13 @@ class Client {
       return false;
     }
 
-    final header = await getHeader(splitStream.split().take(1)) ?? '';
-    final metadataHeader = MetadataHeader.fromString(header);
-
-    info(
-      'client: handling transaction for session: \n'
-      '=====================================\n'
-      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
-      '=====================================',
-    );
+    info('client: handling transaction');
 
     final tempDir = await Directory.systemTemp.createTemp();
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
 
-    // Skip the header portion, write out the next chunk of data.
-
-    // TODO(tytydraco): uhh make sure this is the actual data. It might need .skip(32)
-    final dataStream = splitStream.split().skip(1).take(1);
+    final dataStream = splitStream.split().take(1);
     await inputFile.openWrite().addStream(dataStream);
     debug('client: wrote out to ${inputFile.path}');
 
@@ -67,12 +53,10 @@ class Client {
     final outFile = await Blackbox(command).process(inputFile);
     if (outFile != null) {
       info('client: responding to server');
-      final headedOutFileStream = addHeader(outFile.openRead(), header);
-      await server.addStream(headedOutFileStream);
+      await server.addStream(outFile.openRead());
     } else {
       info('client: informing server of processing failure');
-      final headedOutStream = addHeader(Stream.value([0]), header);
-      await server.addStream(headedOutStream);
+      server.add([0]);
     }
 
     await server.flush();

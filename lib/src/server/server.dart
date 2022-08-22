@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:async/async.dart';
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
-import 'package:sprocd/src/utils/header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
@@ -32,7 +30,7 @@ class Server {
   /// The server start time.
   final _initTime = DateTime.now();
 
-  /// The latest ID to use for the next transaction header.
+  /// The latest ID to use for the next transaction.
   int _transactionId = 0;
 
   /// Create a label for a client socket.
@@ -84,10 +82,7 @@ class Server {
         '=====================================',
       );
 
-      final header = MetadataHeader(initTime: _initTime, id: transactionId);
-      final headedFileStream = addHeader(file.openRead(), header.toString());
-
-      await client.addStream(headedFileStream);
+      await client.addStream(file.openRead());
       await client.flush();
     }
 
@@ -107,21 +102,12 @@ class Server {
     if (workingFile == null) return;
 
     final splitStream = StreamSplitter(client);
-    final header = await getHeader(splitStream.split()) ?? '';
-    final metadataHeader = MetadataHeader.fromString(header);
 
-    info(
-      'server: received transaction from client: \n'
-      '=====================================\n'
-      'CLIENT: $clientId\n'
-      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
-      '=====================================',
-    );
+    info('server: received transaction from client: $clientId');
 
     // Make sure we did not end in an error.
     // TODO(tytydraco): figure out if error or not without reading entire data
-    final data = await splitStream.split().skip(1).take(1).single;
+    final data = await splitStream.split().first;
     final hadError = data.length == 1 && data.first == 0;
     if (!hadError) {
       final outName =
@@ -130,7 +116,7 @@ class Server {
 
       // Write out the output file to the disk.
       debug('server: writing out to $outPath');
-      final dataStream = splitStream.split().skip(1).take(1);
+      final dataStream = splitStream.split().take(1);
       await File(outPath).openWrite().addStream(dataStream);
 
       debug('server: deleting original at ${workingFile.path}');

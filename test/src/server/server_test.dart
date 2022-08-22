@@ -1,10 +1,8 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:sprocd/src/server/server.dart';
-import 'package:sprocd/src/utils/header.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -94,11 +92,7 @@ void main() {
       await dummyClient.first;
 
       // Simulate processing, reply back with output bytes.
-      final header = MetadataHeader(initTime: DateTime.now(), id: 0);
-      final headedStream =
-          addHeader(Stream.value([1, 2, 3, 4, 5]), header.toString());
-
-      await dummyClient.addStream(headedStream);
+      await dummyClient.addStream(Stream.value([1, 2, 3, 4, 5]));
       await dummyClient.flush();
       await dummyClient.close();
 
@@ -135,11 +129,7 @@ void main() {
         await dummyClient.first;
 
         // Simulate processing, reply back with output bytes.
-        final header = MetadataHeader(initTime: DateTime.now(), id: i);
-        final headedStream =
-            addHeader(Stream.value([1, 2, 3, 4, 5, i]), header.toString());
-
-        await dummyClient.addStream(headedStream);
+        await dummyClient.addStream(Stream.value([1, 2, 3, 4, 5, i]));
         await dummyClient.flush();
         await dummyClient.close();
       }
