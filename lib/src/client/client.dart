@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -30,46 +28,35 @@ class Client {
   /// After this long, the connection has failed.
   static const connectTimeout = Duration(seconds: 10);
 
-  /// Handle incoming data from the server.
-  Future<void> _handleData(Socket server, Uint8List data) async {
-    info('client: received ${data.length} bytes');
-    final receivedTransaction = EncodedTransaction.fromBytes(data);
-    final metadataHeader =
-        MetadataHeader.fromString(receivedTransaction.header);
+  /// Handle incoming connections from the server. Returns true if we processed
+  /// data, and false otherwise.
+  Future<bool> _handleConnection(Socket server) async {
+    final splitStream = StreamSplitter(server);
 
-    info(
-      'client: handling transaction for session: \n'
-      '=====================================\n'
-      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-      'ID: ${metadataHeader.id}\n'
-      '=====================================',
-    );
+    // TODO(tytydraco): figure out if error or not without reading entire data
+    if (await splitStream.split().isEmpty) {
+      info('client: nothing to process');
+      return false;
+    }
+
+    info('client: handling transaction');
 
     final tempDir = await Directory.systemTemp.createTemp();
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
-    await inputFile.writeAsBytes(receivedTransaction.data);
+
+    final dataStream = splitStream.split().take(1);
+    await inputFile.openWrite().addStream(dataStream);
     debug('client: wrote out to ${inputFile.path}');
 
     // Process the input file.
     final outFile = await Blackbox(command).process(inputFile);
     if (outFile != null) {
-      // Processing succeeded.
       info('client: responding to server');
-      final outFileBytes = await outFile.readAsBytes();
-      final outTransaction = EncodedTransaction(
-        outFileBytes,
-        header: receivedTransaction.header,
-      );
-      server.add(outTransaction.toBytes());
+      await server.addStream(outFile.openRead());
     } else {
-      // Processing failed.
       info('client: informing server of processing failure');
-      final outTransaction = EncodedTransaction(
-        Uint8List.fromList([0]),
-        header: receivedTransaction.header,
-      );
-      server.add(outTransaction.toBytes());
+      server.add([0]);
     }
 
     await server.flush();
@@ -77,6 +64,9 @@ class Client {
 
     // Delete input file after we processed it.
     await tempDir.delete(recursive: true);
+
+    info('client: processed successfully');
+    return true;
   }
 
   /// Connect the socket to the server. Returns false if the server didn't have
@@ -92,18 +82,7 @@ class Client {
 
     // Get the first chunk of data sent by the server. This should contain our
     // input file if we were given one.
-    //
-    // Only take the first event. Store this first as a list so that we can
-    // perform multiple operations on the data without draining.
-    final data = await server.take(1).toList();
-    if (data.isNotEmpty) {
-      await _handleData(server, data.first);
-      info('client: processed successfully');
-      return true;
-    } else {
-      info('client: nothing to process');
-      return false;
-    }
+    return _handleConnection(server);
   }
 
   /// Connect the socket to the server. If the client gets disconnected, wait

@@ -1,17 +1,11 @@
 import 'dart:io';
 
-import 'package:stdlog/stdlog.dart';
-
-/// Encode some data for socket communication.
-List<int> encode(List<int> bytes) {
-  final result = gzip.encode(bytes);
-  debug('data_encode: encoded size ${bytes.length} -> ${result.length}');
-  return result;
+/// Encode a byte stream for socket communication.
+Stream<List<int>> encode(Stream<List<int>> byteStream) {
+  return gzip.encoder.bind(byteStream);
 }
 
-/// Decode some data for socket communication.
-List<int> decode(List<int> bytes) {
-  final result = gzip.decode(bytes);
-  debug('data_encode: decoded size ${bytes.length} -> ${result.length}');
-  return result;
+/// Decode a byte stream for socket communication.
+Stream<List<int>> decode(Stream<List<int>> byteStream) {
+  return gzip.decoder.bind(byteStream);
 }

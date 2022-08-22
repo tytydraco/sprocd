@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:sprocd/src/server/server.dart';
 import 'package:test/test.dart';
@@ -72,6 +70,9 @@ void main() {
       );
     });
 
+    // TODO(tytydraco): Fix tests here
+    // BUG: client can receive two parts of stream, server merges into one
+    // FIX: use one stream, 32 bit initial part
     test('One input and one client', () async {
       final inputQ = InputQ(serverInputDir);
       final server = Server(
@@ -91,14 +92,7 @@ void main() {
       await dummyClient.first;
 
       // Simulate processing, reply back with output bytes.
-      final transaction = EncodedTransaction(
-        [1, 2, 3, 4, 5],
-        header: MetadataHeader(
-          id: 0,
-          initTime: DateTime.now(),
-        ).toString(),
-      );
-      dummyClient.add(transaction.toBytes());
+      await dummyClient.addStream(Stream.value([1, 2, 3, 4, 5]));
       await dummyClient.flush();
       await dummyClient.close();
 
@@ -135,14 +129,7 @@ void main() {
         await dummyClient.first;
 
         // Simulate processing, reply back with output bytes.
-        final transaction = EncodedTransaction(
-          [1, 2, 3, 4, 5, i],
-          header: MetadataHeader(
-            id: i,
-            initTime: DateTime.now(),
-          ).toString(),
-        );
-        dummyClient.add(transaction.toBytes());
+        await dummyClient.addStream(Stream.value([1, 2, 3, 4, 5, i]));
         await dummyClient.flush();
         await dummyClient.close();
       }

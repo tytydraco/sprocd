@@ -1,8 +1,7 @@
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:path/path.dart';
-import 'package:sprocd/src/model/encoded_transaction.dart';
-import 'package:sprocd/src/model/metadata_header.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:stdlog/stdlog.dart';
 
@@ -31,7 +30,7 @@ class Server {
   /// The server start time.
   final _initTime = DateTime.now();
 
-  /// The latest ID to use for the next transaction header.
+  /// The latest ID to use for the next transaction.
   int _transactionId = 0;
 
   /// Create a label for a client socket.
@@ -58,9 +57,6 @@ class Server {
     _serverSocket = null;
   }
 
-  /// Return true if the data output signifies an error code.
-  bool _dataIsError(List<int> data) => data.length == 1 && data.first == 0;
-
   /// If the client is not yet registered, perform a handshake and send some
   /// input data. Return the working file.
   Future<File?> _serveInput(Socket client) async {
@@ -86,12 +82,7 @@ class Server {
         '=====================================',
       );
 
-      final inFileBytes = await file.readAsBytes();
-
-      final header =
-          MetadataHeader(initTime: _initTime, id: transactionId).toString();
-      final transaction = EncodedTransaction(inFileBytes, header: header);
-      client.add(transaction.toBytes());
+      await client.addStream(file.openRead());
       await client.flush();
     }
 
@@ -110,31 +101,24 @@ class Server {
     final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
-    // Write out the output file to the disk.
-    final data = await client.first;
-    info('server: received ${data.length} bytes from client: $clientId');
+    final splitStream = StreamSplitter(client);
 
-    final transaction = EncodedTransaction.fromBytes(data);
+    info('server: received transaction from client: $clientId');
 
     // Make sure we did not end in an error.
-    if (!_dataIsError(transaction.data)) {
-      final header = MetadataHeader.fromString(transaction.header);
-
-      info(
-        'server: received transaction from client: \n'
-        '=====================================\n'
-        'CLIENT: $clientId\n'
-        'INIT-DATE: ${header.initTime.toIso8601String()}\n'
-        'ID: ${header.id}\n'
-        '=====================================',
-      );
-
+    // TODO(tytydraco): figure out if error or not without reading entire data
+    final data = await splitStream.split().first;
+    final hadError = data.length == 1 && data.first == 0;
+    if (!hadError) {
       final outName =
           basename(workingFile.path).replaceFirst('.working', '.out');
       final outPath = join(outputDir.path, outName);
 
+      // Write out the output file to the disk.
       debug('server: writing out to $outPath');
-      await File(outPath).writeAsBytes(transaction.data);
+      final dataStream = splitStream.split().take(1);
+      await File(outPath).openWrite().addStream(dataStream);
+
       debug('server: deleting original at ${workingFile.path}');
       await workingFile.delete();
     } else {
