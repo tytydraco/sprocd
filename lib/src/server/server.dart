@@ -75,11 +75,11 @@ class Server {
 
       info(
         'server: sending transaction to client: \n'
-        '=====================================\n'
-        'CLIENT: $clientId\n'
-        'INIT-DATE: ${_initTime.toIso8601String()}\n'
-        'ID: $transactionId\n'
-        '=====================================',
+            '=====================================\n'
+            'CLIENT: $clientId\n'
+            'INIT-DATE: ${_initTime.toIso8601String()}\n'
+            'ID: $transactionId\n'
+            '=====================================',
       );
 
       try {
@@ -91,9 +91,10 @@ class Server {
       } catch (e) {
         error('server: failed to send data to client: $clientId');
         stderr.writeln(e.toString());
-        return null;
       }
     }
+
+    return null;
   }
 
   /// Handle an incoming connection from a client.
@@ -102,7 +103,7 @@ class Server {
 
     final clientId = _clientId(client);
 
-    debug('server: client connected: $clientId');
+    info('server: client connected: $clientId');
 
     // Serve input file to this client if one exists.
     final workingFile = await _serveInput(client);
