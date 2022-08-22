@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/server/input_q.dart';
+import 'package:sprocd/src/utils/data_encode.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a server process responsible for forwarding input to
@@ -82,7 +83,7 @@ class Server {
         '=====================================',
       );
 
-      await client.addStream(file.openRead());
+      await client.addStream(encode(file.openRead()));
       await client.flush();
       await client.close();
 
@@ -106,7 +107,8 @@ class Server {
 
     // Make sure we did not end in an error.
     final splitStream = StreamSplitter(client);
-    if (!(await splitStream.split().isEmpty)) {
+    //if (!(await splitStream.split().isEmpty)) {
+    if (true) {
       info('server: received transaction from client: $clientId');
       final outName =
           basename(workingFile.path).replaceFirst('.working', '.out');
@@ -115,7 +117,7 @@ class Server {
       // Write out the output file to the disk.
       debug('server: writing out to $outPath');
       final dataStream = splitStream.split();
-      await File(outPath).openWrite().addStream(dataStream);
+      await File(outPath).openWrite().addStream(decode(dataStream));
 
       debug('server: deleting original at ${workingFile.path}');
       await workingFile.delete();
@@ -124,6 +126,7 @@ class Server {
     }
 
     // We are done, disconnect the client.
+    await splitStream.close();
     await client.close();
 
     final timeEnd = DateTime.now();

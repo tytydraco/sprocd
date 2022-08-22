@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
+import 'package:sprocd/src/utils/data_encode.dart';
 import 'package:stdlog/stdlog.dart';
 
 /// Functionality for a client process responsible for receiving, processing,
@@ -46,17 +47,18 @@ class Client {
 
     info('server: writing out to ${inputFile.path}');
     final dataStream = splitStream.split();
-    await inputFile.openWrite().addStream(dataStream);
+    await inputFile.openWrite().addStream(decode(dataStream));
     debug('client: finished writing out to ${inputFile.path}');
 
     // Process the input file.
     final outFile = await Blackbox(command).process(inputFile);
     if (outFile != null) {
       info('client: responding to server');
-      await server.addStream(outFile.openRead());
+      await server.addStream(encode(outFile.openRead()));
     }
 
     await server.flush();
+    await splitStream.close();
     await server.close();
 
     // Delete input file after we processed it.

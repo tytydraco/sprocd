@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:sprocd/src/server/server.dart';
+import 'package:sprocd/src/utils/data_encode.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -13,8 +14,7 @@ void main() {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-    final serverInputDir = Directory(join(tempDir.path, 'input'))
-      ..createSync();
+    final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();
 
@@ -66,9 +66,7 @@ void main() {
 
       // Nothing should have been written out.
       expect(
-        await serverOutputDir
-            .list()
-            .isEmpty,
+        await serverOutputDir.list().isEmpty,
         true,
       );
     });
@@ -89,14 +87,12 @@ void main() {
 
       // Server will provide dummy client with bytes.
       final dummyClient = await Socket.connect('localhost', 5555);
-      await dummyClient.first;
+      await dummyClient.drain(null);
 
       // Simulate processing, reply back with output bytes.
-      await dummyClient.addStream(Stream.value([1, 2, 3, 4, 5]));
+      await dummyClient.addStream(encode(Stream.value([1, 2, 3, 4, 5])));
       await dummyClient.flush();
       await dummyClient.close();
-
-      await server.stop();
 
       // Ensure server received the new data.
       final outputFile = File(join(serverOutputDir.path, 'dummyInput.out'));
@@ -104,6 +100,8 @@ void main() {
 
       // Ensure the output is what we expect from the processed client data.
       expect(await outputFile.readAsBytes(), [1, 2, 3, 4, 5]);
+
+      await server.stop();
     });
 
     test('Several inputs and clients', () async {
@@ -126,10 +124,10 @@ void main() {
       Future<void> createClients(int i) async {
         // Server will provide dummy client with bytes.
         final dummyClient = await Socket.connect('localhost', 5555);
-        await dummyClient.first;
+        await dummyClient.drain(null);
 
         // Simulate processing, reply back with output bytes.
-        await dummyClient.addStream(Stream.value([1, 2, 3, 4, 5, i]));
+        await dummyClient.addStream(encode(Stream.value([1, 2, 3, 4, 5, i])));
         await dummyClient.flush();
         await dummyClient.close();
       }
