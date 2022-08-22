@@ -11,7 +11,8 @@ void main() {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-    final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
+    final serverInputDir = Directory(join(tempDir.path, 'input'))
+      ..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();
     final serverInputFile = File(join(serverInputDir.path, 'input'));
@@ -22,8 +23,8 @@ void main() {
       ..createSync()
       ..writeAsStringSync(
         'touch ${clientOutputFile.path}; ' // Create output.
-        'echo -n "output!" > ${clientOutputFile.path}; ' // Write output.
-        'echo ${clientOutputFile.path}', // Echo output path.
+            'echo -n "output!" > ${clientOutputFile.path}; ' // Write output.
+            'echo ${clientOutputFile.path}', // Echo output path.
       );
 
     final inputQ = InputQ(serverInputDir);
@@ -72,6 +73,10 @@ void main() {
 
       // Ensure server blackbox output is correct.
       expect(await serverOutputFile.readAsString(), 'output!');
+    });
+
+    test('Stop the server', () async {
+      await expectLater(server.stop(), completes);
     });
   });
 }
