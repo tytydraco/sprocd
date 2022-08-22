@@ -44,9 +44,10 @@ class Client {
     final inputFile = File(join(tempDir.path, 'input'));
     await inputFile.create();
 
-    final dataStream = splitStream.split().take(1);
+    info('server: writing out to ${inputFile.path}');
+    final dataStream = splitStream.split();
     await inputFile.openWrite().addStream(dataStream);
-    debug('client: wrote out to ${inputFile.path}');
+    debug('client: finished writing out to ${inputFile.path}');
 
     // Process the input file.
     final outFile = await Blackbox(command).process(inputFile);

@@ -84,6 +84,9 @@ class Server {
 
       await client.addStream(file.openRead());
       await client.flush();
+      await client.close();
+
+      info('server: finished sending data to client: $clientId');
     }
 
     return file;
@@ -101,18 +104,17 @@ class Server {
     final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
-    info('server: received transaction from client: $clientId');
-
     // Make sure we did not end in an error.
     final splitStream = StreamSplitter(client);
     if (!(await splitStream.split().isEmpty)) {
+      info('server: received transaction from client: $clientId');
       final outName =
           basename(workingFile.path).replaceFirst('.working', '.out');
       final outPath = join(outputDir.path, outName);
 
       // Write out the output file to the disk.
       debug('server: writing out to $outPath');
-      final dataStream = splitStream.split().take(1);
+      final dataStream = splitStream.split();
       await File(outPath).openWrite().addStream(dataStream);
 
       debug('server: deleting original at ${workingFile.path}');
