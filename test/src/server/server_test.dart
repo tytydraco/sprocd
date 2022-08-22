@@ -14,8 +14,7 @@ void main() {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-    final serverInputDir = Directory(join(tempDir.path, 'input'))
-      ..createSync();
+    final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();
 
@@ -27,6 +26,10 @@ void main() {
       ]) {
         file.deleteSync(recursive: true);
       }
+    });
+    tearDownAll(() async {
+      await serverInputDir.delete(recursive: true);
+      await serverOutputDir.delete(recursive: true);
     });
 
     test('Start server when it has already started', () async {
@@ -67,9 +70,7 @@ void main() {
 
       // Nothing should have been written out.
       expect(
-        await serverOutputDir
-            .list()
-            .isEmpty,
+        await serverOutputDir.list().isEmpty,
         true,
       );
     });

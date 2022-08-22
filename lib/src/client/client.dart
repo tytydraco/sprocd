@@ -41,6 +41,7 @@ class Client {
     await inputFile.openWrite().addStream(decode(server));
     debug('client: finished writing out to ${inputFile.path}');
 
+    // Check if we got nothing back from the server.
     if (await inputFile.length() == 0) {
       info('client: nothing to process');
       await tempDir.delete(recursive: true);

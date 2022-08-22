@@ -104,18 +104,23 @@ class Server {
     final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
-    // Make sure we did not end in an error.
-    info('server: received transaction from client: $clientId');
-    final outName = basename(workingFile.path).replaceFirst('.working', '.out');
-    final outFile = File(join(outputDir.path, outName));
-
     // Write out the output file to the disk.
-    debug('server: writing out to ${outFile.path}');
-    await outFile.openWrite().addStream(decode(client));
+    info('server: received transaction from client: $clientId');
+    final tempDir = await Directory.systemTemp.createTemp();
+    final outName = basename(workingFile.path).replaceFirst('.working', '.out');
+    final tmpFile = File(join(tempDir.path, outName));
+    debug('server: writing out to ${tmpFile.path}');
+    await tmpFile.openWrite().addStream(decode(client));
 
-    if (await outFile.length() == 0) {
+    // Check if we got nothing back from the client.
+    if (await tmpFile.length() == 0) {
       error('server: received failure from client: $clientId');
-      await outFile.delete();
+      await tmpFile.delete();
+    } else {
+      final outFile = File(join(outputDir.path, outName));
+      debug('server: moving ${tmpFile.path} to ${outFile.path}');
+      await tmpFile.copy(outFile.path);
+      await tmpFile.delete();
     }
 
     debug('server: deleting original at ${workingFile.path}');
@@ -123,6 +128,7 @@ class Server {
 
     // We are done, disconnect the client.
     await client.close();
+    await tempDir.delete(recursive: true);
 
     final timeEnd = DateTime.now();
     final duration = timeEnd.difference(timeStart);
