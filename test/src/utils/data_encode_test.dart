@@ -9,11 +9,4 @@ void main() {
     final decodedData = decode(encodedData);
     expect(await decodedData.single, data.single);
   });
-
-  test('Data encode and decode match as bytes', () {
-    final data = List.generate(128, (index) => index);
-    final encodedData = encodeBytes(data);
-    final decodedData = decodeBytes(encodedData);
-    expect(decodedData, data);
-  });
 }
