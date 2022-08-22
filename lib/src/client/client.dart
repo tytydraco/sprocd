@@ -74,8 +74,6 @@ class Client {
     );
     info('client: connected');
 
-    // Get the first chunk of data sent by the server. This should contain our
-    // input file if we were given one.
     return _handleConnection(server);
   }
 
