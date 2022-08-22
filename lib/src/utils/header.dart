@@ -24,7 +24,10 @@ Future<String?> getHeader(Stream<List<int>> byteStream) async {
 }
 
 /// Returns a new stream with a header event prepended to a byte stream.
-Stream<List<int>> addHeader(Stream<List<int>> byteStream, String header) {
+Stream<List<int>> addHeader(
+  Stream<List<int>> byteStream,
+  String header,
+) async* {
   // Fill header area with NULLs to start.
   final headerBytes = List.filled(maxHeaderLength, 0, growable: true);
 
@@ -48,10 +51,8 @@ Stream<List<int>> addHeader(Stream<List<int>> byteStream, String header) {
     );
   }
 
-  final group = StreamGroup.merge([
-    Stream.value(headerBytes),
-    byteStream,
-  ]);
-
-  return group;
+  yield headerBytes;
+  await for (final chunk in byteStream) {
+    yield chunk;
+  }
 }

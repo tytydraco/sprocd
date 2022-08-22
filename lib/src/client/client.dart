@@ -36,9 +36,7 @@ class Client {
     final splitStream = StreamSplitter(server);
 
     // TODO(tytydraco): figure out if error or not without reading entire data
-    if (await splitStream
-        .split()
-        .isEmpty) {
+    if (await splitStream.split().isEmpty) {
       info('client: nothing to process');
       return false;
     }
@@ -48,10 +46,10 @@ class Client {
 
     info(
       'client: handling transaction for session: \n'
-          '=====================================\n'
-          'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
-          'ID: ${metadataHeader.id}\n'
-          '=====================================',
+      '=====================================\n'
+      'INIT-DATE: ${metadataHeader.initTime.toIso8601String()}\n'
+      'ID: ${metadataHeader.id}\n'
+      '=====================================',
     );
 
     final tempDir = await Directory.systemTemp.createTemp();
