@@ -101,15 +101,11 @@ class Server {
     final workingFile = await _serveInput(client);
     if (workingFile == null) return;
 
-    final splitStream = StreamSplitter(client);
-
     info('server: received transaction from client: $clientId');
 
     // Make sure we did not end in an error.
-    // TODO(tytydraco): figure out if error or not without reading entire data
-    final data = await splitStream.split().first;
-    final hadError = data.length == 1 && data.first == 0;
-    if (!hadError) {
+    final splitStream = StreamSplitter(client);
+    if (!(await splitStream.split().isEmpty)) {
       final outName =
           basename(workingFile.path).replaceFirst('.working', '.out');
       final outPath = join(outputDir.path, outName);

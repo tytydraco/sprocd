@@ -13,7 +13,8 @@ void main() {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-    final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
+    final serverInputDir = Directory(join(tempDir.path, 'input'))
+      ..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();
 
@@ -65,14 +66,13 @@ void main() {
 
       // Nothing should have been written out.
       expect(
-        await serverOutputDir.list().isEmpty,
+        await serverOutputDir
+            .list()
+            .isEmpty,
         true,
       );
     });
 
-    // TODO(tytydraco): Fix tests here
-    // BUG: client can receive two parts of stream, server merges into one
-    // FIX: use one stream, 32 bit initial part
     test('One input and one client', () async {
       final inputQ = InputQ(serverInputDir);
       final server = Server(

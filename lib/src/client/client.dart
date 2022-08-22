@@ -33,7 +33,6 @@ class Client {
   Future<bool> _handleConnection(Socket server) async {
     final splitStream = StreamSplitter(server);
 
-    // TODO(tytydraco): figure out if error or not without reading entire data
     if (await splitStream.split().isEmpty) {
       info('client: nothing to process');
       return false;
@@ -54,9 +53,6 @@ class Client {
     if (outFile != null) {
       info('client: responding to server');
       await server.addStream(outFile.openRead());
-    } else {
-      info('client: informing server of processing failure');
-      server.add([0]);
     }
 
     await server.flush();
