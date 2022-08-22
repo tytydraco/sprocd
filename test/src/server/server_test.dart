@@ -73,6 +73,8 @@ void main() {
     });
 
     // TODO(tytydraco): Fix tests here
+    // BUG: client can receive two parts of stream, server merges into one
+    // FIX: use one stream, 32 bit initial part
     test('One input and one client', () async {
       final inputQ = InputQ(serverInputDir);
       final server = Server(
