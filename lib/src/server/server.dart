@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/server/input_q.dart';
 import 'package:sprocd/src/utils/data_encode.dart';
@@ -106,27 +105,23 @@ class Server {
     if (workingFile == null) return;
 
     // Make sure we did not end in an error.
-    final splitStream = StreamSplitter(client);
-    //if (!(await splitStream.split().isEmpty)) {
-    if (true) {
-      info('server: received transaction from client: $clientId');
-      final outName =
-          basename(workingFile.path).replaceFirst('.working', '.out');
-      final outPath = join(outputDir.path, outName);
+    info('server: received transaction from client: $clientId');
+    final outName = basename(workingFile.path).replaceFirst('.working', '.out');
+    final outFile = File(join(outputDir.path, outName));
 
-      // Write out the output file to the disk.
-      debug('server: writing out to $outPath');
-      final dataStream = splitStream.split();
-      await File(outPath).openWrite().addStream(decode(dataStream));
+    // Write out the output file to the disk.
+    debug('server: writing out to ${outFile.path}');
+    await outFile.openWrite().addStream(decode(client));
 
-      debug('server: deleting original at ${workingFile.path}');
-      await workingFile.delete();
-    } else {
-      warn('server: client processing failed: $clientId');
+    if (await outFile.length() == 0) {
+      error('server: received failure from client: $clientId');
+      await outFile.delete();
     }
 
+    debug('server: deleting original at ${workingFile.path}');
+    await workingFile.delete();
+
     // We are done, disconnect the client.
-    await splitStream.close();
     await client.close();
 
     final timeEnd = DateTime.now();

@@ -14,7 +14,8 @@ void main() {
     final tempDir = Directory.systemTemp.createTempSync();
     tearDownAll(() => tempDir.deleteSync(recursive: true));
 
-    final serverInputDir = Directory(join(tempDir.path, 'input'))..createSync();
+    final serverInputDir = Directory(join(tempDir.path, 'input'))
+      ..createSync();
     final serverOutputDir = Directory(join(tempDir.path, 'output'))
       ..createSync();
 
@@ -66,9 +67,42 @@ void main() {
 
       // Nothing should have been written out.
       expect(
-        await serverOutputDir.list().isEmpty,
+        await serverOutputDir
+            .list()
+            .isEmpty,
         true,
       );
+    });
+
+    test('Client responds with failure', () async {
+      final inputQ = InputQ(serverInputDir);
+      final server = Server(
+        port: 5555,
+        inputQ: inputQ,
+        outputDir: serverOutputDir,
+      );
+
+      final dummyInput = File(join(serverInputDir.path, 'dummyInput'));
+      await dummyInput.create();
+      await dummyInput.writeAsString('hello world');
+
+      await server.start();
+
+      // Server will provide dummy client with bytes.
+      final dummyClient = await Socket.connect('localhost', 5555);
+      await dummyClient.drain(null);
+
+      // Simulate client failure.
+      await dummyClient.close();
+
+      // Wait since we have no way of knowing when server will finish.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+
+      // Ensure server received the new data.
+      final outputFile = File(join(serverOutputDir.path, 'dummyInput.out'));
+      expect(outputFile.existsSync(), false);
+
+      await server.stop();
     });
 
     test('One input and one client', () async {
@@ -93,6 +127,9 @@ void main() {
       await dummyClient.addStream(encode(Stream.value([1, 2, 3, 4, 5])));
       await dummyClient.flush();
       await dummyClient.close();
+
+      // Wait since we have no way of knowing when server will finish.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       // Ensure server received the new data.
       final outputFile = File(join(serverOutputDir.path, 'dummyInput.out'));
@@ -138,6 +175,9 @@ void main() {
       }
 
       await server.stop();
+
+      // Wait since we have no way of knowing when server will finish.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       // Ensure server received the new data.
       for (var i = 0; i < multiClientCount; i++) {

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:async/async.dart';
 import 'package:path/path.dart';
 import 'package:sprocd/src/client/blackbox.dart';
 import 'package:sprocd/src/utils/data_encode.dart';
@@ -32,13 +31,6 @@ class Client {
   /// Handle incoming connections from the server. Returns true if we processed
   /// data, and false otherwise.
   Future<bool> _handleConnection(Socket server) async {
-    final splitStream = StreamSplitter(server);
-
-    if (await splitStream.split().isEmpty) {
-      info('client: nothing to process');
-      return false;
-    }
-
     info('client: handling transaction');
 
     final tempDir = await Directory.systemTemp.createTemp();
@@ -46,9 +38,14 @@ class Client {
     await inputFile.create();
 
     info('server: writing out to ${inputFile.path}');
-    final dataStream = splitStream.split();
-    await inputFile.openWrite().addStream(decode(dataStream));
+    await inputFile.openWrite().addStream(decode(server));
     debug('client: finished writing out to ${inputFile.path}');
+
+    if (await inputFile.length() == 0) {
+      info('client: nothing to process');
+      await tempDir.delete(recursive: true);
+      return false;
+    }
 
     // Process the input file.
     final outFile = await Blackbox(command).process(inputFile);
@@ -58,10 +55,7 @@ class Client {
     }
 
     await server.flush();
-    await splitStream.close();
     await server.close();
-
-    // Delete input file after we processed it.
     await tempDir.delete(recursive: true);
 
     info('client: processed successfully');
