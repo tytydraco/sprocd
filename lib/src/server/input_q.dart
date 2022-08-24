@@ -11,6 +11,9 @@ class InputQ {
     _watchForNewInputs();
   }
 
+  /// The file path suffix to use for working files.
+  static const workingFileSuffix = '.working';
+
   /// The directory housing the input files.
   final Directory inputDir;
 
@@ -47,13 +50,23 @@ class InputQ {
   Future<void> scan() async {
     _inputs.clear();
     await for (final entity in inputDir.list()) {
-      if (entity is File && !entity.path.endsWith('.working')) {
+      if (entity is File && !entity.path.endsWith(workingFileSuffix)) {
         debug('input_q: scanned ${entity.path}');
         _inputs.add(entity);
       }
     }
 
     debug('input_q: discovered ${_inputs.length} inputs');
+  }
+
+  /// Convert a file to a working file.
+  File workingFile(File file) => File('${file.path}$workingFileSuffix');
+
+  /// Convert a working file to a normal file.
+  File unWorkingFile(File file) {
+    final lastWorkingSuffixIdx = file.path.lastIndexOf(workingFileSuffix);
+    final path = file.path.substring(0, lastWorkingSuffixIdx);
+    return File(path);
   }
 
   /// Returns the next input to be used in the set. Remove it from being
@@ -70,12 +83,11 @@ class InputQ {
 
     debug('input_q: popped ${file.path}');
 
-    final newName = '${basename(file.path)}.working';
-    final newPath = join(file.parent.path, newName);
-    await file.rename(newPath);
+    final newFile = workingFile(file);
+    await file.rename(newFile.path);
 
-    debug('input_q: moved original to $newPath');
+    debug('input_q: moved original to ${newFile.path}');
 
-    return File(newPath);
+    return newFile;
   }
 }

@@ -89,5 +89,20 @@ void main() {
 
       expect(inputQ.numberOfInputs, 0);
     });
+
+    test('File to working file', () {
+      const dummyPath = '/dummy/file';
+      final dummyFile = File(dummyPath);
+      final workingFile = inputQ.workingFile(dummyFile);
+      expect(workingFile.path, dummyPath + InputQ.workingFileSuffix);
+    });
+
+    test('Working file to file', () {
+      const dummyPath = '/dummy/file';
+      const dummyWorkingPath = dummyPath + InputQ.workingFileSuffix;
+      final dummyWorkingFile = File(dummyWorkingPath);
+      final file = inputQ.unWorkingFile(dummyWorkingFile);
+      expect(file.path, dummyPath);
+    });
   });
 }
