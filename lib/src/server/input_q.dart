@@ -60,10 +60,10 @@ class InputQ {
   }
 
   /// Convert a file to a working file.
-  File workingFile(File file) => File('${file.path}$workingFileSuffix');
+  File toWorkingFile(File file) => File('${file.path}$workingFileSuffix');
 
   /// Convert a working file to a normal file.
-  File unWorkingFile(File file) {
+  File toUnWorkingFile(File file) {
     final lastWorkingSuffixIdx = file.path.lastIndexOf(workingFileSuffix);
     final path = file.path.substring(0, lastWorkingSuffixIdx);
     return File(path);
@@ -83,7 +83,7 @@ class InputQ {
 
     debug('input_q: popped ${file.path}');
 
-    final newFile = workingFile(file);
+    final newFile = toWorkingFile(file);
     await file.rename(newFile.path);
 
     debug('input_q: moved original to ${newFile.path}');

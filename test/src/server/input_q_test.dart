@@ -93,7 +93,7 @@ void main() {
     test('File to working file', () {
       const dummyPath = '/dummy/file';
       final dummyFile = File(dummyPath);
-      final workingFile = inputQ.workingFile(dummyFile);
+      final workingFile = inputQ.toWorkingFile(dummyFile);
       expect(workingFile.path, dummyPath + InputQ.workingFileSuffix);
     });
 
@@ -101,7 +101,7 @@ void main() {
       const dummyPath = '/dummy/file';
       const dummyWorkingPath = dummyPath + InputQ.workingFileSuffix;
       final dummyWorkingFile = File(dummyWorkingPath);
-      final file = inputQ.unWorkingFile(dummyWorkingFile);
+      final file = inputQ.toUnWorkingFile(dummyWorkingFile);
       expect(file.path, dummyPath);
     });
   });
