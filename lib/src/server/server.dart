@@ -79,6 +79,7 @@ class Server {
         'CLIENT: $clientId\n'
         'INIT-DATE: ${_initTime.toIso8601String()}\n'
         'ID: $transactionId\n'
+        'FILE: ${file.path}\n'
         '=====================================',
       );
 
