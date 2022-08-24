@@ -72,12 +72,12 @@ class Server {
     } else {
       info(
         'server[$id]: sending transaction to client: \n'
-            '=====================================\n'
-            'CLIENT: $clientId\n'
-            'INIT-DATE: ${_initTime.toIso8601String()}\n'
-            'ID: $id\n'
-            'FILE: ${file.path}\n'
-            '=====================================',
+        '=====================================\n'
+        'CLIENT: $clientId\n'
+        'INIT-DATE: ${_initTime.toIso8601String()}\n'
+        'ID: $id\n'
+        'FILE: ${file.path}\n'
+        '=====================================',
       );
 
       try {
