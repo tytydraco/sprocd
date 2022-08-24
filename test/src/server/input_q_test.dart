@@ -31,10 +31,16 @@ void main() {
       });
 
       expect(inputQ.numberOfInputs, 2);
-      expect((await inputQ.pop())!.path, '${test1.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${test1.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 1);
-      expect((await inputQ.pop())!.path, '${test2.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${test2.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 0);
     });
@@ -52,13 +58,22 @@ void main() {
       await inputQ.scan();
 
       expect(inputQ.numberOfInputs, 3);
-      expect((await inputQ.pop())!.path, '${first.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${first.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 2);
-      expect((await inputQ.pop())!.path, '${second.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${second.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 1);
-      expect((await inputQ.pop())!.path, '${third.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${third.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 0);
     });
@@ -79,13 +94,22 @@ void main() {
       await inputQ.scan();
 
       expect(inputQ.numberOfInputs, 3);
-      expect((await inputQ.pop())!.path, '${a.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${a.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 2);
-      expect((await inputQ.pop())!.path, '${b.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${b.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 1);
-      expect((await inputQ.pop())!.path, '${c.path}.working');
+      expect(
+        (await inputQ.pop())!.path,
+        '${c.path}${InputQ.workingFileSuffix}',
+      );
 
       expect(inputQ.numberOfInputs, 0);
     });

@@ -75,11 +75,11 @@ class Server {
 
       info(
         'server: sending transaction to client: \n'
-            '=====================================\n'
-            'CLIENT: $clientId\n'
-            'INIT-DATE: ${_initTime.toIso8601String()}\n'
-            'ID: $transactionId\n'
-            '=====================================',
+        '=====================================\n'
+        'CLIENT: $clientId\n'
+        'INIT-DATE: ${_initTime.toIso8601String()}\n'
+        'ID: $transactionId\n'
+        '=====================================',
       );
 
       try {
@@ -112,7 +112,10 @@ class Server {
     // Write out the output file to the disk.
     info('server: received transaction from client: $clientId');
     final tempDir = await Directory.systemTemp.createTemp();
-    final outName = basename(workingFile.path).replaceFirst('.working', '.out');
+    final outName = basename(workingFile.path).replaceFirst(
+      InputQ.workingFileSuffix,
+      '.out',
+    );
     final tmpFile = File(join(tempDir.path, outName));
     debug('server: writing out to ${tmpFile.path}');
     await tmpFile.openWrite().addStream(decode(client));
@@ -121,15 +124,19 @@ class Server {
     if (await tmpFile.length() == 0) {
       error('server: received failure from client: $clientId');
       await tmpFile.delete();
+
+      info('server: adding failed input back to queue');
+      final unWorkingFile = inputQ.toUnWorkingFile(workingFile);
+      await workingFile.rename(unWorkingFile.path);
     } else {
       final outFile = File(join(outputDir.path, outName));
       debug('server: moving ${tmpFile.path} to ${outFile.path}');
       await tmpFile.copy(outFile.path);
       await tmpFile.delete();
-    }
 
-    debug('server: deleting original at ${workingFile.path}');
-    await workingFile.delete();
+      debug('server: deleting original at ${workingFile.path}');
+      await workingFile.delete();
+    }
 
     // We are done, disconnect the client.
     await client.close();

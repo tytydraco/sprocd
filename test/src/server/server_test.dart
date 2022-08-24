@@ -103,6 +103,10 @@ void main() {
       final outputFile = File(join(serverOutputDir.path, 'dummyInput.out'));
       expect(outputFile.existsSync(), false);
 
+      // Ensure file was put back into queue.
+      await inputQ.scan();
+      expect(inputQ.numberOfInputs, 1);
+
       await server.stop();
     });
 
