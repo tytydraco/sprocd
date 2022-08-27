@@ -66,6 +66,11 @@ class Client {
     await server.close();
     await tempDir.delete(recursive: true);
 
+    if (outFile?.existsSync() == true) {
+      debug('client: deleting output file at ${outFile!.path}');
+      await outFile.delete();
+    }
+
     info('client: processed successfully');
     return true;
   }
